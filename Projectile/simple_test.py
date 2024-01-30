@@ -8,13 +8,10 @@ def Position(x_0, y_0, v_x0, v_y0, t):
     x = x_0 + v_x0 * t
     y = y_0 + v_y0*t - 0.5*g*t**2 
 
-    range = v_x0*v_y0/g
-    max_h = v_y0**2/(2*g)
-    max_t = 2*v_y0/g
 
-    if y < 0:
-        y = 0
-        x = v_x0*v_y0/g   
+    # if y < 0:  #When this is included, the model performs very badly on the test data. Though it is needed to make the results physically meaningful.
+    #     y = 0
+    #     x = v_x0*v_y0/g   
 
     return x, y
 
@@ -68,21 +65,24 @@ t: [0, 5]
 
 n_datapoints = 10
 
-def Dataset(n_datapoints, max_time,  n_timesteps):
-
-    inputs = np.zeros((n_datapoints, 4))
+def Projectile_dataset(n_datapoints, max_time,  n_timesteps):
+    #inputs = np.zeros((n_datapoints, 4))
+    inputs = np.zeros((n_datapoints, 4 + n_timesteps))
     extremals = np.zeros((n_datapoints, 3))
     trajectories = np.zeros((n_datapoints, n_timesteps, 2))
 
     x_0s = np.random.uniform(0.0, 10.0, size = n_datapoints)
     y_0s = np.random.uniform(0.0, 15.0, size = n_datapoints)
+
     v_x0s = np.random.uniform(0.0, 15.0, size = n_datapoints)
     v_y0s = np.random.uniform(0.0, 20.0, size = n_datapoints)
     ts = np.linspace(0.0, max_time, n_timesteps)  #Forget about the precise trajectories for now
 
 
     for i in range(0, n_datapoints):
-        inputs[i] = [x_0s[i], y_0s[i], v_x0s[i], v_y0s[i]]
+        #inputs[i] = [x_0s[i], y_0s[i], v_x0s[i], v_y0s[i]]
+
+        inputs[i] = np.concatenate(([x_0s[i], y_0s[i], v_x0s[i], v_y0s[i]], ts))
 
         extremals[i] = Extremals(x_0s[i], y_0s[i], v_x0s[i], v_y0s[i])
 

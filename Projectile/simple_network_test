@@ -1,20 +1,44 @@
 import torch 
 import torch.nn as nn
 import numpy as np
-from simple_test import Dataset
+from simple_test import Projectile_dataset
 from torch.optim import Adam
 from tqdm import tqdm
+from torch.utils.data import Dataset
+import torch.nn.init as init
 
-torch.manual_seed(42)
-np.random.seed(42)
+torch.manual_seed(2)
+np.random.seed(2)
 
 
-n_datapoints = 1000
+n_datapoints = 2000
 max_time = 5
 n_timesteps = 10
 
 
-inputs, extremals, trajectories = Dataset(n_datapoints, max_time,  n_timesteps)   #Dataset(n_datapoints, max_time,  n_timesteps)
+# It is probably struggling because the timesteps aren't given as an input 
+
+inputs, extremals, trajectories = Projectile_dataset(n_datapoints, max_time,  n_timesteps)   #Dataset(n_datapoints, max_time,  n_timesteps)
+
+
+class MyDataset(Dataset):
+    def __init__(self, inputs, targets):
+        self.inputs = inputs
+        self.targets = targets
+    
+    def __getitem__(self, index):
+        x = self.inputs[index]
+        y = self.targets[index]
+        
+        # Flatten the target tensor
+        #y = y.view(-1)  # This reshapes y from [10, 2] to [20]
+        x = torch.flatten(x)
+        y = torch.flatten(y)
+        
+        return x, y
+
+    def __len__(self):
+        return len(self.inputs)
 
 
 
@@ -29,16 +53,24 @@ class ProjectileModel(nn.Module):
             nn.ReLU(),
             nn.Linear(512, 512),
             nn.ReLU(),
+            # nn.Linear(512, 512),
+            # nn.ReLU(),
             nn.Linear(512, output_size),
         )
 
-        """ self.fc1 = nn.Linear(input_size, hidden_size)
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(hidden_size, output_size) """
+        # Apply Kaiming He initialization to all Linear layers in the Sequential model
+        self.linear_relu_stack.apply(self.init_weights)
+
+    def init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            init.kaiming_normal_(m.weight, nonlinearity='relu')
+            if m.bias is not None:
+                init.constant_(m.bias, 0)
+
+
 
     
     def forward(self, x):
-
         x = self.linear_relu_stack(x)
 
         """ x = self.fc1(x)
@@ -50,22 +82,26 @@ class ProjectileModel(nn.Module):
 
 
 #Hyperparamerets
-learning_rate = 1e-4
+learning_rate = 1e-3
 batch_size = 32
 epochs = 1000
 
 
 #Network parameters
-input_size = 4
-output_size = 3   #When using only the extremals
+input_size = 4 + n_timesteps  #including the time-step 
+#output_size = 3   #When using only the extremals
+output_size = n_timesteps*2 #When using the time series
 hidden_layers = 120
 
 
 #Make torch dataset
 input_tensor = torch.from_numpy(inputs).float()
-output_tensor = torch.from_numpy(extremals).float()
-torch_dataset = torch.utils.data.TensorDataset(input_tensor, output_tensor)
-train_data, test_data = torch.utils.data.random_split(torch_dataset, [int(0.8*n_datapoints), int(0.2*n_datapoints)])
+#output_tensor = torch.from_numpy(extremals).float()
+output_tensor = torch.from_numpy(trajectories).float()
+
+torch_dataset = MyDataset(input_tensor, output_tensor) 
+#torch_dataset = torch.utils.data.TensorDataset(input_tensor, output_tensor)
+train_data, test_data = torch.utils.data.random_split(torch_dataset, [int(0.7*n_datapoints), int(0.3*n_datapoints)])
 
 train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle = True)
 test_loader = torch.utils.data.DataLoader(test_data, batch_size = batch_size, shuffle = False)
@@ -77,14 +113,11 @@ loss_fn = nn.MSELoss()
 optimizer = Adam(model.parameters(), lr=learning_rate)
 
 with tqdm(range(epochs + 1), desc='Epochs', unit='epoch', leave=True, bar_format='{desc}: {percentage:3.0f}%|{bar}|{postfix}') as t:
-
     for epoch in t:
 
         model.train()
         running_loss = 0 
         for inputs, targets in train_loader:
-            optimizer.zero_grad()
-
             # Forward pass
             pred = model(inputs) 
             loss = loss_fn(pred, targets)
@@ -94,8 +127,9 @@ with tqdm(range(epochs + 1), desc='Epochs', unit='epoch', leave=True, bar_format
             optimizer.step()
             running_loss += loss.item()
 
+            optimizer.zero_grad()
+
         t.set_postfix(Loss=f'{(running_loss/len(train_loader)):.6f}') 
-        #t.set_postfix('Loss ': f{(running_loss/len(train_loader)):.6f})
         t.refresh() # Refresh to show postfix
 
 
@@ -117,4 +151,6 @@ with tqdm(range(epochs + 1), desc='Epochs', unit='epoch', leave=True, bar_format
 print("Finished training")
 
 
+
+#Now implement LIME
 
