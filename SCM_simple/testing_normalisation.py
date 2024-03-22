@@ -1,4 +1,26 @@
-import numpy as np 
+import numpy as np
+
+
+
+def normalize_data(inputs, targets):
+    # Flatten the input and target arrays
+    inputs = inputs.reshape(inputs.shape[0], -1)
+    targets = targets.reshape(targets.shape[0], -1)
+
+    # Calculate mean and standard deviation for normalization
+    input_mean = np.mean(inputs, axis=0)
+    input_std = np.std(inputs, axis=0)
+    target_mean = np.mean(targets, axis=0)
+    target_std = np.std(targets, axis=0)
+
+    # Normalize the data
+    inputs_normalized = (inputs - input_mean) / input_std
+    targets_normalized = (targets - target_mean) / target_std
+
+    return inputs_normalized, targets_normalized
+
+
+
 
 
 
@@ -7,8 +29,6 @@ def datapoint_gen(a, b, e):
     c = 5*a + d
     y1 = 3.5*a + 0.5*d 
     y2 = - 2*d + 0.2*e
-
-    #c = 20
 
     return c, d, y1, y2
 
@@ -20,6 +40,7 @@ def datapoint_gen(a, b, e):
 #Input array: 500 x 5
 #Output array: [y1, y2] -> 500 x 2 
 
+n_datapoints = 10
 
 def scm_dataset_gen(n_datapoints):
     np.random.seed(5)
@@ -38,9 +59,42 @@ def scm_dataset_gen(n_datapoints):
 
         outputs[i] = [y1, y2]
 
-    #print(inputs.shape)
     return inputs, outputs 
 
+
+
+inputs, outputs = scm_dataset_gen(n_datapoints)
+print("Original outputs")
+print(outputs)
+print()
+
+normalised_inputs, normalised_outputs = normalize_data(inputs, outputs)
+print("Normalised outputs")
+print(normalised_outputs)
+print()
+
+recalc_outputs = np.zeros((n_datapoints, 2))
+for i in range(0, n_datapoints):
+    a = normalised_inputs[i,0]
+    b = normalised_inputs[i, 1]
+    e = normalised_inputs[i, 4]
+    c, d, y1, y2 = datapoint_gen(a, b, e)
+
+    #inputs[i] = [A[i], B[i], c, d, E[i]]
+
+    recalc_outputs[i] = [y1, y2]
+
+
+print("Recalculated outputs")
+print(recalc_outputs)
+print()
+
+inp, renormalised_outputs = normalize_data(inputs, recalc_outputs)
+print("Renormalised outputs")
+print(renormalised_outputs)
+
+print("difference")
+print(renormalised_outputs-normalised_outputs)
 
 
 def scm_out_of_domain(n_out_of_domain):
@@ -83,49 +137,3 @@ def scm_diff_seed(n_diff_seed):
 
 
 
-def FrankeFunction(x,y):
-    term1 = 0.75*np.exp(-(0.25*(9*x-2)**2) - 0.25*((9*y-2)**2))
-    term2 = 0.75*np.exp(-((9*x+1)**2)/49.0 - 0.1*(9*y+1))
-    term3 = 0.5*np.exp(-(9*x-7)**2/4.0 - 0.25*((9*y-3)**2))
-    term4 = -0.2*np.exp(-(9*x-4)**2 - (9*y-7)**2)
-    return term1 + term2 + term3 + term4
-
-
-def Franke_data(n_dpoints, noise):
-    np.random.seed(1234567)   #this was used for high noise
-
-    x = np.arange(0,1,1/n_dpoints)
-    y = np.arange(0,1,1/n_dpoints)
-
-    x, y = np.meshgrid(x, y)
-    z = FrankeFunction(x, y) + noise*np.random.randn(n_dpoints, n_dpoints)
-
-    x_flat = np.ravel(x)
-    y_flat = np.ravel(y)
-    z_flat = np.ravel(z)
-
-    inputs = np.column_stack((x_flat, y_flat))
-    print(inputs.shape)
-    print(z_flat.shape)
-    # exit()
-
-    return inputs, z_flat
-
-
-
-def super_simple(n_datapoints):
-     
-    A = np.random.uniform(-5, 10, size=n_datapoints)
-    B = np.random.uniform(5, 20, size=n_datapoints)
-    E = np.random.uniform(0, 15, size=n_datapoints)
- 
-    y1 = A
-    y2 = B + E
-
-    inputs = np.column_stack((A, B, E))
-    outputs = np.column_stack((y1, y2))
-
-    return inputs, outputs
-
-
-     
