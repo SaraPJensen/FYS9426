@@ -4,20 +4,20 @@ import numpy as np
 
 def datapoint_gen(a, b, e):
     d = 2*b 
-    c = 5*a + d
-    y1 = 3.5*a + 0.5*d 
-    y2 = - 2*d + 0.2*e
+    c = 5*a - a/d
+    y1 = 3*a**2 + d**3 + a*d - d**2
+    y2 = - d**2 + 4*d + np.sqrt(e)
 
     return c, d, y1, y2
 
 
 def datapoint_gen_diff_rand_model(n_datapoints, a, b, e):
 
-    d = np.random.uniform(10, 40, size=n_datapoints)
-    c = np.random.uniform(-15, 90, size=n_datapoints)
+    d = np.random.uniform(6, 11, size=n_datapoints)
+    c = np.random.uniform(-9.8, 3.6, size=n_datapoints)
 
-    y1 = 3.5*a + 0.5*d 
-    y2 = - 2*d + 0.2*e
+    y1 = 3*a**2 + d**3 + a*d - d**2
+    y2 = - d**2 + 4*d + np.sqrt(e)
 
     return c, d, y1, y2
 
@@ -25,9 +25,9 @@ def datapoint_gen_diff_rand_model(n_datapoints, a, b, e):
 def datapoint_gen_diff_model(n_datapoints, a, b, e):
 
     d = 0.8*b - 0.5*a
-    c = 3*a - 0.8*d
-    y1 = 3.5*a + 0.5*d 
-    y2 = - 2*d + 0.2*e
+    c = 3*a + 0.8*d
+    y1 = 3*a**2 + d**3 + a*d - d**2
+    y2 = - d**2 + 4*d + np.sqrt(e)
 
     return c, d, y1, y2
 
@@ -44,9 +44,9 @@ def scm_dataset_gen(n_datapoints):
     inputs = np.zeros((n_datapoints, 5))
     outputs = np.zeros((n_datapoints, 2))
 
-    A = np.random.uniform(-5, 10, size=n_datapoints)
-    B = np.random.uniform(5, 20, size=n_datapoints)
-    E = np.random.uniform(0, 15, size=n_datapoints)
+    A = np.random.uniform(-2, 4, size=n_datapoints)
+    B = np.random.uniform(3, 5.5, size=n_datapoints)
+    E = np.random.uniform(0, 8, size=n_datapoints)
 
     C, D, y1, y2 = datapoint_gen(A, B, E)
 
@@ -63,9 +63,9 @@ def scm_diff_seed(n_diff_seed):
         inputs = np.zeros((n_diff_seed, 5))
         outputs = np.zeros((n_diff_seed, 2))
 
-        A = np.random.uniform(-5, 10, size=n_diff_seed)
-        B = np.random.uniform(5, 20, size=n_diff_seed)
-        E = np.random.uniform(0, 15, size=n_diff_seed)
+        A = np.random.uniform(-2, 4, size=n_diff_seed)
+        B = np.random.uniform(3, 5.5, size=n_diff_seed)
+        E = np.random.uniform(0, 8, size=n_diff_seed)
 
         C, D, y1, y2 = datapoint_gen(A, B, E)
 
@@ -82,9 +82,9 @@ def scm_out_of_domain(n_out_of_domain):
         inputs = np.zeros((n_out_of_domain, 5))
         outputs = np.zeros((n_out_of_domain, 2))
 
-        A = np.random.uniform(-3, 12, size=n_out_of_domain)
-        B = np.random.uniform(20, 22, size=n_out_of_domain)
-        E = np.random.uniform(2, 8, size=n_out_of_domain)  
+        A = np.random.uniform(-4, 5, size=n_out_of_domain)
+        B = np.random.uniform(1, 3.4, size=n_out_of_domain)
+        E = np.random.uniform(3, 9, size=n_out_of_domain)  
 
         C, D, y1, y2 = datapoint_gen(A, B, E)
 
@@ -100,9 +100,9 @@ def scm_diff_rand_model(n_diff_model, intv_info = False):
         inputs = np.zeros((n_diff_model, 5))
         outputs = np.zeros((n_diff_model, 2))
 
-        A = np.random.uniform(-5, 10, size=n_diff_model)
-        B = np.random.uniform(5, 20, size=n_diff_model)
-        E = np.random.uniform(0, 15, size=n_diff_model)
+        A = np.random.uniform(-2, 4, size=n_diff_model)
+        B = np.random.uniform(3, 5.5, size=n_diff_model)
+        E = np.random.uniform(0, 8, size=n_diff_model) 
 
         C, D, y1, y2 = datapoint_gen_diff_rand_model(n_diff_model, A, B, E)
 
@@ -123,9 +123,9 @@ def scm_diff_model(n_diff_model, intv_info = False):
         inputs = np.zeros((n_diff_model, 5))
         outputs = np.zeros((n_diff_model, 2))
 
-        A = np.random.uniform(-5, 10, size=n_diff_model)
-        B = np.random.uniform(5, 20, size=n_diff_model)
-        E = np.random.uniform(0, 15, size=n_diff_model)
+        A = np.random.uniform(-2, 4, size=n_diff_model)
+        B = np.random.uniform(3, 5.5, size=n_diff_model)
+        E = np.random.uniform(0, 8, size=n_diff_model)
 
         C, D, y1, y2 = datapoint_gen_diff_model(n_diff_model, A, B, E)
 

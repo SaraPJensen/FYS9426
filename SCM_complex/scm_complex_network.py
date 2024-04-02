@@ -1,8 +1,8 @@
 import torch 
 import torch.nn as nn
 import numpy as np
-from scm_simple_dataset import scm_dataset_gen, scm_out_of_domain, scm_diff_seed, Franke_data, super_simple, scm_diff_model, scm_diff_rand_model
-from scm_intv_simple_dataset import scm_intv_dataset_gen, scm_intv_diff_seed, scm_intv_ood, scm_intv_c_d_dataset_gen
+from scm_complex_dataset import scm_dataset_gen, scm_out_of_domain, scm_diff_seed, Franke_data, super_simple, scm_diff_model, scm_diff_rand_model
+from scm_intv_complex_dataset import scm_intv_dataset_gen, scm_intv_diff_seed, scm_intv_ood, scm_intv_c_d_dataset_gen
 from torch.optim import Adam
 from tqdm import tqdm
 from torch.utils.data import Dataset
@@ -20,8 +20,8 @@ learning_rate = 1e-3
 epochs = 1000
 Input_scaling = True
 Output_scaling = True
-Intervene = False
-Intervene_info = False
+Intervene = True
+Intervene_info = True
 C_D = False
 
 
@@ -300,7 +300,7 @@ file.close()
 
 
 with tqdm(range(epochs + 1), desc='Epochs', unit='epoch', leave=True, bar_format='{desc}: {percentage:3.0f}%|{bar}|{postfix}') as t:
-    best_val_loss = 5
+    best_val_loss = 500000
     best_epoch = 0
 
     for epoch in t:
