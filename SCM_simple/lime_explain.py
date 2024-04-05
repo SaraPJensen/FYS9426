@@ -250,47 +250,59 @@ model.eval()
 #endregion
 
 
-def true_func(inputs):
+def true_func_1(inputs):
     y1 = 3.5*inputs[:,4]
-    y2 = 4*inputs[:,0]
+    #y2 = 4*inputs[:,0]
 
-    out = np.column_stack((y1, y2))
+    #out = np.column_stack((y1, y2))
 
-    return out
+    return y1
+
+def true_func_2(inputs):
+    #y1 = 3.5*inputs[:,4]
+    y2 = 4*inputs[:,3]
+
+    #out = np.column_stack((y1, y2))
+
+    return y2
+
 
 #region LIME
 input_feature_names = ['A', 'B', 'C', 'D', 'E']
 output_feature_names = ['y1', 'y2']
 
 with torch.no_grad():
-    explainer = lime_tabular.LimeTabularExplainer(inputs_test_np, 
+    explainer_1 = lime_tabular.LimeTabularExplainer(inputs_test_np, 
                                                   mode='regression', 
-                                                  feature_names = input_feature_names, 
-                                                  class_names = output_feature_names)
+                                                  feature_names = input_feature_names)
+    
+    explainer_2 = lime_tabular.LimeTabularExplainer(inputs_test_np, 
+                                                  mode='regression', 
+                                                  feature_names = input_feature_names)
 
     #selected_instances = torch.Tensor(inputs_test_np[0])
     selected_instances = inputs_test_np[0]
 
-    explanation = explainer.explain_instance(selected_instances, 
-                                             true_func, 
-                                             num_features = len(input_feature_names))
+    # explanation_1 = explainer.explain_instance(selected_instances, 
+    #                                          true_func_1, 
+    #                                          num_features = len(input_feature_names))
+    
+    # explanation_2 = explainer.explain_instance(selected_instances, 
+    #                                          true_func_2, 
+    #                                          num_features = len(input_feature_names))
 
-    explanation_y1 = explainer.explain_instance(selected_instances, 
-                                                   true_func, 
-                                                   num_features=len(input_feature_names), 
-                                                   top_labels=0)
+    explanation_y1 = explainer_1.explain_instance(selected_instances, 
+                                                   true_func_1, 
+                                                   num_features=len(input_feature_names))
 
-    explanation_y2 = explainer.explain_instance(selected_instances,
-                                                    true_func, 
-                                                    num_features=len(input_feature_names), 
-                                                    top_labels=10)
+    explanation_y2 = explainer_2.explain_instance(selected_instances,
+                                                    true_func_2, 
+                                                    num_features=len(input_feature_names))
 
 
 print(inputs_test_np[0])
 print()
 print(outputs_test_np[0])
-
-print(explanation.as_list())
 
 print()
 

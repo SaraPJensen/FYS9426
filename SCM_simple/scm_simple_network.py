@@ -23,14 +23,32 @@ Intervene = False
 Intervene_info = False
 C_D = False
 
+#Output_var = 'y1'
+Output_var = 'y2'
 
+print("Simple data")
+print("Output variable: ", Output_var)
+print("Normalisation: ", Input_scaling, Output_scaling)
+print("Intervention: ", Intervene)
+print("Intervene Info: ", Intervene_info)
+print("Intervene C, D :", C_D)
 #region Dataset functions
 
 
 class MyDataset(Dataset):
-    def __init__(self, inputs, targets):
+    def __init__(self, inputs, targets, output_var):
         self.inputs = inputs
-        self.targets = targets
+        self.output_var = output_var
+
+        if output_var == 'y1':
+            self.targets = targets[:,0]
+
+        elif output_var == 'y2':
+            self.targets = targets[:,1]
+        else: 
+            print("Invalid input variable")
+            exit()
+
 
     def fit_scaling_inputs(self, scaler_inputs, training_data):
         inputs, _ = training_data[:]
@@ -46,23 +64,21 @@ class MyDataset(Dataset):
         self.inputs = torch.from_numpy(self.scaler_inputs.transform(self.inputs))
         self.inputs = self.inputs.to(torch.float32)
 
-
-
     def fit_scaling_outputs(self, scaler_outputs, training_data):
         _, outputs = training_data[:]
-        scaler_outputs.fit(outputs)
+
+        scaler_outputs.fit(outputs.reshape(-1, 1))
         self.scaler_outputs = scaler_outputs
-        self.targets = torch.from_numpy(self.scaler_outputs.transform(self.targets))  #scale all the input features in the dataset, both training and test, according to the training data
-        self.targets = self.targets.to(torch.float32)
+        self.targets = torch.from_numpy(self.scaler_outputs.transform(self.targets.reshape(-1, 1)))  #scale all the input features in the dataset, both training and test, according to the training data
+        self.targets = self.targets.to(torch.float32).flatten()
 
         return self.scaler_outputs
 
     def scale_outputs(self, trained_scaler_outputs):
         self.scaler_outputs = trained_scaler_outputs
-        self.targets = torch.from_numpy(self.scaler_outputs.transform(self.targets))
-        self.targets = self.targets.to(torch.float32)
-    
-        
+        self.targets = torch.from_numpy(self.scaler_outputs.transform(self.targets.reshape(-1, 1)))
+        self.targets = self.targets.to(torch.float32).flatten()
+
     
     def __getitem__(self, index):
         x = self.inputs[index]
@@ -109,10 +125,7 @@ class TestModel(nn.Module):
     def forward(self, x):
         x = torch.Tensor(x)
         x = self.linear_relu_stack(x)
-
-        """ x = self.fc1(x)
-        x = self.relu(x)
-        x = self.fc2(x) """
+        x = x.flatten()
 
         return x
     
@@ -148,7 +161,7 @@ if __name__ == "__main__":
     output_tensor = torch.from_numpy(outputs).float()
 
 
-    torch_dataset = MyDataset(input_tensor, output_tensor) 
+    torch_dataset = MyDataset(input_tensor, output_tensor, Output_var) 
     # This implicitly shuffles the data as well, do don't need to include that in the dataset generator for the interventional data
     train_data, val_data, test_data = torch.utils.data.random_split(torch_dataset, [int(0.7*n_datapoints), int(0.15*n_datapoints), int(0.15*n_datapoints)])  
 
@@ -174,7 +187,7 @@ if __name__ == "__main__":
     diff_input_tensor = torch.from_numpy(diff_seed_inputs).float()
     diff_output_tensor = torch.from_numpy(diff_seed_targets).float()
 
-    diff_seed_torch_dataset = MyDataset(diff_input_tensor, diff_output_tensor) 
+    diff_seed_torch_dataset = MyDataset(diff_input_tensor, diff_output_tensor, Output_var) 
     if Input_scaling:
         diff_seed_torch_dataset.scale_inputs(trained_scaler_inputs)
     if Output_scaling:
@@ -194,7 +207,7 @@ if __name__ == "__main__":
     input_tensor = torch.from_numpy(ood_inputs).float()
     output_tensor = torch.from_numpy(ood_targets).float()
 
-    ood_torch_dataset = MyDataset(input_tensor, output_tensor) 
+    ood_torch_dataset = MyDataset(input_tensor, output_tensor, Output_var) 
     if Input_scaling:
         ood_torch_dataset.scale_inputs(trained_scaler_inputs)
     if Output_scaling:
@@ -211,7 +224,7 @@ if __name__ == "__main__":
     input_tensor = torch.from_numpy(diff_mod_inputs).float()
     output_tensor = torch.from_numpy(diff_mod_targets).float()
 
-    diff_mod_torch_dataset = MyDataset(input_tensor, output_tensor) 
+    diff_mod_torch_dataset = MyDataset(input_tensor, output_tensor, Output_var) 
     if Input_scaling:
         diff_mod_torch_dataset.scale_inputs(trained_scaler_inputs)
     if Output_scaling:
@@ -228,7 +241,7 @@ if __name__ == "__main__":
     input_tensor = torch.from_numpy(diff_rand_mod_inputs).float()
     output_tensor = torch.from_numpy(diff_rand_mod_targets).float()
 
-    diff_mod_rand_torch_dataset = MyDataset(input_tensor, output_tensor) 
+    diff_mod_rand_torch_dataset = MyDataset(input_tensor, output_tensor, Output_var) 
     if Input_scaling:
         diff_mod_rand_torch_dataset.scale_inputs(trained_scaler_inputs)
     if Output_scaling:
@@ -243,7 +256,7 @@ if __name__ == "__main__":
     input_tensor = torch.from_numpy(intv_inputs).float()
     output_tensor = torch.from_numpy(intv_targets).float()
 
-    intv_torch_dataset = MyDataset(input_tensor, output_tensor) 
+    intv_torch_dataset = MyDataset(input_tensor, output_tensor, Output_var) 
     if Input_scaling:
         intv_torch_dataset.scale_inputs(trained_scaler_inputs)
     if Output_scaling:
@@ -260,7 +273,7 @@ if __name__ == "__main__":
 
     #Network parameters
     input_size = inputs.shape[1]
-    output_size = outputs.shape[1]
+    output_size = 1 #outputs.shape[1]
     hidden_size = 120
 
 
@@ -273,27 +286,30 @@ if __name__ == "__main__":
 
     #region Train model
 
-    if Input_scaling and Output_scaling:
-        filename = f"MinMax_all_lr_{learning_rate}_train_test_loss"
-    elif Input_scaling:
-        filename = f"MinMax_inputs_raw_outputs_lr_{learning_rate}_train_test_loss"
-    elif Output_scaling:
-        filename = f"MinMax_outputs_raw_inputs_lr_{learning_rate}_train_test_loss"
-    else:
-        filename = f"Raw_data_lr_{learning_rate}_train_test_loss"
-
+    file_intv = ''
     if Intervene:
         if C_D:
             if Intervene_info: 
-                filename = "Intv_C_D_Info_" + filename
+                file_intv = "Intv_C_D_Info_"
             else:
-                filename = "Intv_C_D_noInfo_" + filename
+                file_intv = "Intv_C_D_noInfo_"
 
         else:
             if Intervene_info:
-                filename = "Intv_Info_" + filename
+                file_intv = "Intv_Info_"
             else:
-                filename = "Intv_noInfo_" + filename
+                file_intv = "Intv_noInfo_"
+
+
+    if Input_scaling and Output_scaling:
+        filename = f"{Output_var}_{file_intv}MinMax_all_lr_{learning_rate}"
+    elif Input_scaling:
+        filename = f"{Output_var}_{file_intv}MinMax_inputs_raw_outputs_lr_{learning_rate}"
+    elif Output_scaling:
+        filename = f"{Output_var}_{file_intv}MinMax_outputs_raw_inputs_lr_{learning_rate}"
+    else:
+        filename = f"{Output_var}_{file_intv}Raw_data_lr_{learning_rate}"
+
 
 
     file = open(f"progress/{filename}.csv", "w")
@@ -488,43 +504,3 @@ if __name__ == "__main__":
 
     #endregion
 
-
-    ### TO DO
-    ### Test LIME
-    ### Test Shap
-
-
-
-
-    '''
-    def predict_lime(data):
-        # Convert data into PyTorch tensors (if it is not already)
-        data = torch.tensor(data, dtype=torch.float32)
-
-        output = model(data)
-        return output.detach().numpy()
-
-
-
-    explainer = lime_tabular.LimeTabularExplainer(test_loader.numpy(),   #may need to have this in the shape of a list or similar, not the entire dataloader
-                                                feature_names=["y1", "y2"],
-                                                mode = 'regression')
-
-
-
-
-
-    ### Choose a sample from your test data that you want to explain.
-    i = 10    # index of the selected test data point
-    num_features = 5   #The top five contributing features
-    exp = explainer.explain_instance(test_data[i], predict_lime, num_features=5)
-
-    #Check your result. The result is shown as the influence of each feature on the prediction.
-    exp.show_in_notebook(show_table=True)
-
-    #Replace show_table with show_all=False to show less information.
-
-    #You can also print a list of tuples. Each tuple corresponds to a feature and how much it contributes to the predicted value.
-    print(exp.as_list())
-
-    '''
