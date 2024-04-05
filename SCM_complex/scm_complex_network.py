@@ -18,11 +18,11 @@ np.random.seed(2)
 #Hyperparameters
 learning_rate = 1e-3
 epochs = 1000
-Input_scaling = True
-Output_scaling = True
+Input_scaling = False
+Output_scaling = False
 Intervene = True
-Intervene_info = True
-C_D = False
+Intervene_info = False
+C_D = True
 
 
 #region Dataset functions
