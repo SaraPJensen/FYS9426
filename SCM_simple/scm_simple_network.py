@@ -19,9 +19,9 @@ learning_rate = 1e-3
 epochs = 1000
 Input_scaling = True
 Output_scaling = True
-Intervene = False
+Intervene = True
 Intervene_info = False
-C_D = False
+C_D = True
 
 #Output_var = 'y1'
 Output_var = 'y2'
@@ -41,10 +41,10 @@ class MyDataset(Dataset):
         self.output_var = output_var
 
         if output_var == 'y1':
-            self.targets = targets[:,0]
+            self.targets = targets[:,0].unsqueeze(dim = 1)
 
         elif output_var == 'y2':
-            self.targets = targets[:,1]
+            self.targets = targets[:,1].unsqueeze(dim = 1)
         else: 
             print("Invalid input variable")
             exit()
@@ -70,14 +70,14 @@ class MyDataset(Dataset):
         scaler_outputs.fit(outputs.reshape(-1, 1))
         self.scaler_outputs = scaler_outputs
         self.targets = torch.from_numpy(self.scaler_outputs.transform(self.targets.reshape(-1, 1)))  #scale all the input features in the dataset, both training and test, according to the training data
-        self.targets = self.targets.to(torch.float32).flatten()
+        self.targets = self.targets.to(torch.float32) 
 
         return self.scaler_outputs
 
     def scale_outputs(self, trained_scaler_outputs):
         self.scaler_outputs = trained_scaler_outputs
         self.targets = torch.from_numpy(self.scaler_outputs.transform(self.targets.reshape(-1, 1)))
-        self.targets = self.targets.to(torch.float32).flatten()
+        self.targets = self.targets.to(torch.float32) 
 
     
     def __getitem__(self, index):
@@ -125,7 +125,6 @@ class TestModel(nn.Module):
     def forward(self, x):
         x = torch.Tensor(x)
         x = self.linear_relu_stack(x)
-        x = x.flatten()
 
         return x
     
@@ -148,10 +147,6 @@ if __name__ == "__main__":
 
     else:
         inputs, outputs = scm_dataset_gen(n_datapoints)
-
-    #inputs, outputs = Franke_data(n_datapoints, 0)
-
-    #inputs, outputs = super_simple(n_datapoints)
 
 
     batch_size = 32
@@ -180,7 +175,10 @@ if __name__ == "__main__":
     ### Define a dataset with different seed
     n_diff_seed = 500
     if Intervene:
-        diff_seed_inputs, diff_seed_targets = scm_intv_diff_seed(n_diff_seed, Intervene_info)
+        if C_D:
+            diff_seed_inputs, diff_seed_targets = scm_intv_c_d_dataset_gen(n_datapoints, Intervene_info, seed = 12345)
+        else:
+            diff_seed_inputs, diff_seed_targets = scm_intv_dataset_gen(n_datapoints, Intervene_info, seed = 12345)
     else:
         diff_seed_inputs, diff_seed_targets = scm_diff_seed(n_diff_seed)
 
@@ -264,6 +262,21 @@ if __name__ == "__main__":
     intv_test_loader = torch.utils.data.DataLoader(intv_torch_dataset, batch_size = 1, shuffle = True)
 
 
+    #Define a dataset with observational data, using a different seed from the training
+    n_obsv_testing = 500
+    obsv_inputs, obsv_targets = scm_dataset_gen(n_obsv_testing, seed = 54321)
+
+    input_tensor = torch.from_numpy(obsv_inputs).float()
+    output_tensor = torch.from_numpy(obsv_targets).float()
+
+    obsv_torch_dataset = MyDataset(input_tensor, output_tensor, Output_var) 
+    if Input_scaling:
+        obsv_torch_dataset.scale_inputs(trained_scaler_inputs)
+    if Output_scaling:
+        obsv_torch_dataset.scale_outputs(trained_scaler_outputs)
+    obsv_test_loader = torch.utils.data.DataLoader(obsv_torch_dataset, batch_size = 1, shuffle = True)
+
+
 
     #endregion
 
@@ -313,7 +326,7 @@ if __name__ == "__main__":
 
 
     file = open(f"progress/{filename}.csv", "w")
-    file.write("Epoch,train_loss,val_loss,test_loss,diff_seed_loss,out_of_domain_loss,diff_model_loss,diff_mod_rand_loss,intv_test_loss \n")
+    file.write("Epoch,train_loss,val_loss,test_loss,diff_seed_loss,out_of_domain_loss,diff_model_loss,diff_mod_rand_loss,obsv_test_loss,intv_test_loss \n")
     file.close()
 
 
@@ -329,12 +342,15 @@ if __name__ == "__main__":
                 #Forward pass
                 optimizer.zero_grad()
                 pred = model(inputs)
+                # print("Pred shape: ", pred.shape)
+                # print("Target shape: ", targets.shape)
                 loss = loss_fn(pred, targets) 
 
                 # Backward pass
                 loss.backward()
                 optimizer.step()
                 running_loss += loss.item()*100
+
 
                 
 
@@ -388,6 +404,13 @@ if __name__ == "__main__":
                     loss = loss_fn(pred, targets) 
                     diff_mod_rand_loss += loss.item()*100
 
+            obsv_test_loss = 0
+            with torch.no_grad():
+                for inputs, targets in obsv_test_loader:
+                    pred = model(inputs)
+                    loss = loss_fn(pred, targets) 
+                    obsv_test_loss += loss.item()*100
+
 
             intv_test_loss = 0
             with torch.no_grad():
@@ -398,7 +421,7 @@ if __name__ == "__main__":
 
 
             file = open(f"progress/{filename}.csv", "a")
-            file.write(f"{epoch},{running_loss/len(train_loader)},{val_loss/len(val_loader)},{test_loss/len(test_loader)},{diff_seed_loss/len(diff_seed_test_loader)},{ood_loss/len(ood_test_loader)},{diff_mod_loss/len(diff_mod_loader)},{diff_mod_rand_loss/len(diff_mod_rand_loader)},{intv_test_loss/len(intv_test_loader)} \n")
+            file.write(f"{epoch},{running_loss/len(train_loader)},{val_loss/len(val_loader)},{test_loss/len(test_loader)},{diff_seed_loss/len(diff_seed_test_loader)},{ood_loss/len(ood_test_loader)},{diff_mod_loss/len(diff_mod_loader)},{diff_mod_rand_loss/len(diff_mod_rand_loader)},{obsv_test_loss/len(obsv_test_loader)},{intv_test_loss/len(intv_test_loader)} \n")
             file.close()
 
             if current_val_loss < best_val_loss:
@@ -463,7 +486,7 @@ if __name__ == "__main__":
             ood_loss += loss.item()*100
 
     print(f'Out of domain loss: {ood_loss/len(ood_test_loader):.6f}')
-    print()
+    #print()
 
     diff_mod_loss = 0
     with torch.no_grad():
@@ -473,7 +496,7 @@ if __name__ == "__main__":
             diff_mod_loss += loss.item()*100
 
     print(f'Different model loss: {diff_mod_loss/len(diff_mod_loader):.6f}')
-    print()
+    #print()
 
     diff_mod_rand_loss = 0
     with torch.no_grad():
@@ -483,7 +506,17 @@ if __name__ == "__main__":
             diff_mod_rand_loss += loss.item()*100
 
     print(f'Different model random loss: {diff_mod_rand_loss/len(diff_mod_rand_loader):.6f}')
-    print()
+    #print()
+
+    obsv_test_loss = 0
+    with torch.no_grad():
+        for inputs, targets in obsv_test_loader:
+            pred = model(inputs)
+            loss = loss_fn(pred, targets) 
+            obsv_test_loss += loss.item()*100
+
+    print(f'Observational test loss: {obsv_test_loss/len(obsv_test_loader):.6f}')
+    #print()
 
 
     intv_test_loss = 0
@@ -499,8 +532,9 @@ if __name__ == "__main__":
 
 
     file = open(f"progress/{filename}.csv", "a")
-    file.write(f"{best_epoch},{train_loss_best_model},{best_val_loss},{test_loss/len(test_loader)},{diff_seed_loss/len(diff_seed_test_loader)},{ood_loss/len(ood_test_loader)},{diff_mod_loss/len(diff_mod_loader)},{diff_mod_rand_loss/len(diff_mod_rand_loader)},{intv_test_loss/len(intv_test_loader)} \n")
+    file.write(f"{best_epoch},{train_loss_best_model},{best_val_loss},{test_loss/len(test_loader)},{diff_seed_loss/len(diff_seed_test_loader)},{ood_loss/len(ood_test_loader)},{diff_mod_loss/len(diff_mod_loader)},{diff_mod_rand_loss/len(diff_mod_rand_loader)},{obsv_test_loss/len(obsv_test_loader):.6f},{intv_test_loss/len(intv_test_loader)} \n")
     file.close()
+
 
     #endregion
 

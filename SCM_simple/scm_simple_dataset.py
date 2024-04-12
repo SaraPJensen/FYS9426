@@ -39,8 +39,8 @@ def datapoint_gen_diff_model(n_datapoints, a, b, e):
 #Output array: [y1, y2] -> 500 x 2 
 
 
-def scm_dataset_gen(n_datapoints):
-    np.random.seed(5)
+def scm_dataset_gen(n_datapoints, seed = 5):
+    np.random.seed(seed)
     inputs = np.zeros((n_datapoints, 5))
     outputs = np.zeros((n_datapoints, 2))
 
@@ -58,8 +58,8 @@ def scm_dataset_gen(n_datapoints):
 
 
 
-def scm_diff_seed(n_diff_seed):
-        np.random.seed(12345)
+def scm_diff_seed(n_diff_seed, seed = 12345):
+        np.random.seed(seed)
         inputs = np.zeros((n_diff_seed, 5))
         outputs = np.zeros((n_diff_seed, 2))
 
@@ -77,8 +77,8 @@ def scm_diff_seed(n_diff_seed):
 
 
 
-def scm_out_of_domain(n_out_of_domain):
-        np.random.seed(5)
+def scm_out_of_domain(n_out_of_domain, seed = 5):
+        np.random.seed(seed)
         inputs = np.zeros((n_out_of_domain, 5))
         outputs = np.zeros((n_out_of_domain, 2))
 
