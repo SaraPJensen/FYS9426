@@ -18,11 +18,12 @@ np.random.seed(2)
 #Hyperparameters
 learning_rate = 1e-3
 epochs = 1000
-Input_scaling = True
-Output_scaling = True
+Input_scaling = False
+Output_scaling = False
 Intervene = True
 Intervene_info = False
 C_D = True
+Deep = True
 
 #Output_var = 'y1'
 Output_var = 'y2'
@@ -33,6 +34,7 @@ print("Normalisation: ", Input_scaling, Output_scaling)
 print("Intervention: ", Intervene)
 print("Intervene Info: ", Intervene_info)
 print("Intervene C, D :", C_D)
+print("Deep: ", Deep)
 
 
 #region Dataset functions
@@ -51,6 +53,9 @@ class MyDataset(Dataset):
         else: 
             print("Invalid input variable")
             exit()
+
+        self.unscaled_inputs = self.inputs
+        self.unscaled_targets = self.targets
 
 
 
@@ -81,17 +86,29 @@ class MyDataset(Dataset):
         self.scaler_outputs = trained_scaler_outputs
         self.targets = torch.from_numpy(self.scaler_outputs.transform(self.targets.reshape(-1, 1)))
         self.targets = self.targets.to(torch.float32)
-    
+
+
+    def rescale_outputs(self, outputs):
+        rescaled_outputs = torch.from_numpy(self.scaler_outputs.inverse_transform(outputs))
+
+        return rescaled_outputs
     
     def __getitem__(self, index):
         x = self.inputs[index]
         y = self.targets[index]
 
         return x, y
+    
 
     def __len__(self):
         return len(self.inputs)
     
+
+
+def inverse_scale_outputs(trained_scaler_outputs, preds):
+    unscaled_preds = trained_scaler_outputs.inverse_transform(preds)
+
+    return unscaled_preds
 
 #endregion
 
@@ -103,7 +120,7 @@ class TestModel(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(TestModel, self).__init__() 
 
-
+        # Original: 2 hidden layers
         self.linear_relu_stack = nn.Sequential(
             nn.Linear(input_size, hidden_size),
             nn.ReLU(),
@@ -123,14 +140,56 @@ class TestModel(nn.Module):
             if m.bias is not None:
                 init.constant_(m.bias, 0)
 
-
-    
     def forward(self, x):
         x = torch.Tensor(x)
         x = self.linear_relu_stack(x)
 
         return x
     
+
+
+class DeepModel(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size):
+        super(DeepModel, self).__init__() 
+
+        self.linear_relu_stack = nn.Sequential(
+            nn.Linear(input_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, output_size),
+        )
+
+        # Apply Kaiming He initialization to all Linear layers in the Sequential model
+        self.linear_relu_stack.apply(self.init_weights)
+
+    def init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            init.kaiming_normal_(m.weight, nonlinearity='relu')
+            if m.bias is not None:
+                init.constant_(m.bias, 0)
+
+
+    def forward(self, x):
+        x = torch.Tensor(x)
+        x = self.linear_relu_stack(x)
+
+        return x
+        
 #endregion
 
 if __name__ == "__main__":
@@ -297,7 +356,10 @@ if __name__ == "__main__":
 
 
     #Model, Loss and Optimizer
-    model = TestModel(input_size, hidden_size, output_size)
+    if Deep:
+        model = DeepModel(input_size, hidden_size, output_size)
+    else:
+        model = TestModel(input_size, hidden_size, output_size)
     loss_fn = nn.MSELoss() 
     optimizer = Adam(model.parameters(), lr=learning_rate)
 
@@ -329,8 +391,10 @@ if __name__ == "__main__":
     else:
         filename = f"{Output_var}_{file_intv}Raw_data_lr_{learning_rate}"
 
+    if Deep:
+        filename = "deeeeep_" + filename
 
-    file = open(f"progress/{filename}.csv", "w")
+    file = open(f"progress/{Output_var}/{filename}.csv", "w")
     file.write("Epoch,train_loss,val_loss,test_loss,diff_seed_loss,out_of_domain_loss,diff_model_loss,diff_mod_rand_loss,obsv_test_loss,intv_test_loss \n")
     file.close()
 
@@ -422,7 +486,7 @@ if __name__ == "__main__":
                     intv_test_loss += loss.item()*100
 
 
-            file = open(f"progress/{filename}.csv", "a")
+            file = open(f"progress/{Output_var}/{filename}.csv", "a")
             file.write(f"{epoch},{running_loss/len(train_loader)},{val_loss/len(val_loader)},{test_loss/len(test_loader)},{diff_seed_loss/len(diff_seed_test_loader)},{ood_loss/len(ood_test_loader)},{diff_mod_loss/len(diff_mod_loader)},{diff_mod_rand_loss/len(diff_mod_rand_loader)},{obsv_test_loss/len(obsv_test_loader)},{intv_test_loss/len(intv_test_loader)} \n")
             file.close()
 
@@ -430,7 +494,7 @@ if __name__ == "__main__":
                 best_epoch = epoch
                 best_val_loss = current_val_loss
                 train_loss_best_model = running_loss/len(train_loader) 
-                save_filename = f"saved_models/best_{filename}.pth"
+                save_filename = f"saved_models/{Output_var}/best_{filename}.pth"
                 torch.save(model, save_filename)
 
             if epoch % 100 == 0:
@@ -447,7 +511,7 @@ if __name__ == "__main__":
 
 
     #region Test with other data
-    model = torch.load(f"saved_models/best_{filename}.pth")
+    model = torch.load(f"saved_models/{Output_var}/best_{filename}.pth")
 
     print("Best epoch: ", best_epoch)
     print(f'Best val loss: {best_val_loss:.6f}')
@@ -528,7 +592,7 @@ if __name__ == "__main__":
     print()
 
 
-    file = open(f"progress/{filename}.csv", "a")
+    file = open(f"progress/{Output_var}/{filename}.csv", "a")
     file.write(f"{best_epoch},{train_loss_best_model},{best_val_loss},{test_loss/len(test_loader)},{diff_seed_loss/len(diff_seed_test_loader)},{ood_loss/len(ood_test_loader)},{diff_mod_loss/len(diff_mod_loader)},{diff_mod_rand_loss/len(diff_mod_rand_loader)},{obsv_test_loss/len(obsv_test_loader)},{intv_test_loss/len(intv_test_loader)} \n")
     file.close()
 
