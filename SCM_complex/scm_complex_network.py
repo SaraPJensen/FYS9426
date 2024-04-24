@@ -1,8 +1,8 @@
 import torch 
 import torch.nn as nn
 import numpy as np
-from scm_complex_dataset import scm_dataset_gen, scm_out_of_domain, scm_diff_seed, Franke_data, super_simple, scm_diff_model, scm_diff_rand_model
-from scm_intv_complex_dataset import scm_intv_dataset_gen, scm_intv_diff_seed, scm_intv_ood, scm_intv_c_d_dataset_gen
+from scm_complex_dataset import scm_dataset_gen, scm_out_of_domain, scm_diff_seed, Franke_data, super_simple, scm_diff_model, scm_diff_rand_model, scm_indep_ood
+from scm_intv_complex_dataset import scm_intv_dataset_gen, scm_intv_ood, scm_intv_c_d_dataset_gen
 from torch.optim import Adam
 from tqdm import tqdm
 from torch.utils.data import Dataset
@@ -15,18 +15,20 @@ np.random.seed(2)
 
 
 #regions Parameters
-#Hyperparameters
+#Model and dataset parameters 
 learning_rate = 1e-3
 epochs = 1000
-Input_scaling = False
-Output_scaling = False
-Intervene = True
-Intervene_info = False
-C_D = True
-Deep = True
+Input_scaling = True
+Output_scaling = True
 
-#Output_var = 'y1'
-Output_var = 'y2'
+Intervene = False
+Intervene_info = False
+C_D = False
+Deep = False
+Independent = True
+
+Output_var = 'y1'
+#Output_var = 'y2'
 
 print("Complex data")
 print("Output variable: ", Output_var)
@@ -206,12 +208,10 @@ if __name__ == "__main__":
         else:
             inputs, outputs = scm_intv_dataset_gen(n_datapoints, Intervene_info)
 
+    elif Independent:
+        inputs, outputs = scm_diff_rand_model(n_datapoints)
     else:
         inputs, outputs = scm_dataset_gen(n_datapoints)
-
-    #inputs, outputs = Franke_data(n_datapoints, 0)
-
-    #inputs, outputs = super_simple(n_datapoints)
 
 
     batch_size = 32
@@ -244,6 +244,8 @@ if __name__ == "__main__":
             diff_seed_inputs, diff_seed_targets = scm_intv_c_d_dataset_gen(n_datapoints, Intervene_info, seed = 12345)
         else:
             diff_seed_inputs, diff_seed_targets = scm_intv_dataset_gen(n_datapoints, Intervene_info, seed = 12345)
+    elif Independent:
+        diff_seed_inputs, diff_seed_targets = scm_diff_rand_model(n_diff_seed, seed = 12345)
     else:
         diff_seed_inputs, diff_seed_targets = scm_diff_seed(n_diff_seed)
     
@@ -263,8 +265,11 @@ if __name__ == "__main__":
 
     if Intervene:
         ood_inputs, ood_targets = scm_intv_ood(n_ood, Intervene_info)
+    elif Independent:
+        ood_inputs, ood_targets = scm_indep_ood(n_ood)
     else:
         ood_inputs, ood_targets = scm_out_of_domain(n_ood)
+        
 
 
     input_tensor = torch.from_numpy(ood_inputs).float()
@@ -295,7 +300,7 @@ if __name__ == "__main__":
     diff_mod_loader = torch.utils.data.DataLoader(diff_mod_torch_dataset, batch_size = 1, shuffle = True)
 
 
-    ### Define a dataset with different SCM between the inputs
+    ### Define a dataset with different SCM between the inputs, here the inputs are independent of each other
     #For now, this is never interventional 
 
     n_diff_rand_model = 500
@@ -390,6 +395,9 @@ if __name__ == "__main__":
         filename = f"{Output_var}_{file_intv}MinMax_outputs_raw_inputs_lr_{learning_rate}"
     else:
         filename = f"{Output_var}_{file_intv}Raw_data_lr_{learning_rate}"
+
+    if Independent:
+        filename = "indep_" + filename
 
     if Deep:
         filename = "deeeeep_" + filename

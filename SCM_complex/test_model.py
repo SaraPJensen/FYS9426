@@ -23,14 +23,14 @@ learning_rate = 1e-3
 epochs = 1000
 Input_scaling = True
 Output_scaling = True
-Intervene = True
+Intervene = False
 Intervene_info = False
 C_D = False
-Deep = True
+Deep = False
 Rescale = True
 
-Output_var = 'y1'
-#Output_var = 'y2'
+#Output_var = 'y1'
+Output_var = 'y2'
 
 
 print("Complex data")

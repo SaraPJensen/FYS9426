@@ -138,7 +138,6 @@ def scm_intv_dataset_gen(n_datapoints, intv_info = False, seed = 5):
     outputs = np.row_stack((I_A_out, I_B_out, I_C_out, I_D_out, I_E_out))
 
     return inputs, outputs
-    #return shuffled_inputs, shuffled_outputs 
 
 
 def scm_intv_c_d_dataset_gen(n_datapoints, intv_info = False, seed = 5):
@@ -153,15 +152,6 @@ def scm_intv_c_d_dataset_gen(n_datapoints, intv_info = False, seed = 5):
     outputs = np.row_stack((I_C_out, I_D_out))
 
     return inputs, outputs
-    #return shuffled_inputs, shuffled_outputs 
-
-
-
-
-def scm_intv_diff_seed(n_diff_seed, intv_info = False):
-    inputs, outputs = scm_intv_dataset_gen(n_diff_seed, intv_info, seed = 12345)
-
-    return inputs, outputs 
 
 
 
