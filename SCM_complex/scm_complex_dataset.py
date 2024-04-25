@@ -1,4 +1,8 @@
 import numpy as np 
+from scipy.stats import truncnorm
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(1, 1)
+
 
 
 
@@ -8,13 +12,16 @@ def datapoint_gen(a, b, e):
     y1 = 3*a**2 + d**3 + a*d - d**2
     y2 = - d**2 + 4*d + np.sqrt(e)
 
+    if e.any() < 0:
+        print(e)
+
     return c, d, y1, y2
 
 
 def datapoint_gen_diff_rand_model(n_datapoints, a, b, e):
 
-    d = np.random.uniform(6, 11, size=n_datapoints)
-    c = np.random.uniform(-9.8, 3.6, size=n_datapoints)
+    c = np.random.uniform(-9.8, 19.6, size=n_datapoints)  #[-9.8, 19.6]
+    d = np.random.uniform(6, 11, size=n_datapoints)   #[6, 11]
 
     y1 = 3*a**2 + d**3 + a*d - d**2
     y2 = - d**2 + 4*d + np.sqrt(e)
@@ -56,106 +63,167 @@ def scm_dataset_gen(n_datapoints, seed = 5):
     return inputs, outputs 
 
 
+def truncation(a_trunc, b_trunc, n_datapoints):
+    loc = (a_trunc+b_trunc)/2
+    sigma = abs(a_trunc-b_trunc)/5
+    a, b = (a_trunc - loc)/sigma, (b_trunc - loc)/sigma
+    dist = truncnorm.rvs(a, b, loc=loc, scale = sigma, size=n_datapoints) 
+
+    # print(min(dist))
+    # print(max(dist))
+    # print(dist.shape)
+    # print(np.mean(dist))
+    # print()
+
+    # ax.hist(dist, density=True, bins='auto', histtype='stepfilled', alpha=0.2)
+    # plt.show()
+    # plt.close()
+
+    return dist
+
+
+def scm_normal_dist(n_datapoints, seed = 5):
+    np.random.seed(seed)
+    inputs = np.zeros((n_datapoints, 5))
+    outputs = np.zeros((n_datapoints, 2))
+
+    A = truncation(-2, 4, n_datapoints)
+    B = truncation(3, 5.5, n_datapoints)
+    E = truncation(0, 8, n_datapoints)
+
+    C, D, y1, y2 = datapoint_gen(A, B, E)
+
+    inputs = np.column_stack((A, B, C, D, E))
+    outputs = np.column_stack((y1, y2))
+
+    return inputs, outputs 
+
+
 
 
 def scm_diff_seed(n_diff_seed, seed = 12345):
-        np.random.seed(seed)
-        inputs = np.zeros((n_diff_seed, 5))
-        outputs = np.zeros((n_diff_seed, 2))
+    np.random.seed(seed)
+    inputs = np.zeros((n_diff_seed, 5))
+    outputs = np.zeros((n_diff_seed, 2))
 
-        A = np.random.uniform(-2, 4, size=n_diff_seed)
-        B = np.random.uniform(3, 5.5, size=n_diff_seed)
-        E = np.random.uniform(0, 8, size=n_diff_seed)
+    A = np.random.uniform(-2, 4, size=n_diff_seed)
+    B = np.random.uniform(3, 5.5, size=n_diff_seed)
+    E = np.random.uniform(0, 8, size=n_diff_seed)
 
-        C, D, y1, y2 = datapoint_gen(A, B, E)
+    C, D, y1, y2 = datapoint_gen(A, B, E)
 
-        inputs = np.column_stack((A, B, C, D, E))
-        outputs = np.column_stack((y1, y2))
+    inputs = np.column_stack((A, B, C, D, E))
+    outputs = np.column_stack((y1, y2))
 
-        return inputs, outputs 
+    return inputs, outputs 
 
 
 
 
 def scm_out_of_domain(n_out_of_domain, seed = 5):
-        np.random.seed(seed)
-        inputs = np.zeros((n_out_of_domain, 5))
-        outputs = np.zeros((n_out_of_domain, 2))
+    np.random.seed(seed)
+    inputs = np.zeros((n_out_of_domain, 5))
+    outputs = np.zeros((n_out_of_domain, 2))
 
-        A = np.random.uniform(-4, 5, size=n_out_of_domain)
-        B = np.random.uniform(1, 3.4, size=n_out_of_domain)
-        E = np.random.uniform(3, 9, size=n_out_of_domain)  
+    A = np.random.uniform(-4, 5, size=n_out_of_domain)
+    B = np.random.uniform(1, 3.4, size=n_out_of_domain)
+    E = np.random.uniform(3, 9, size=n_out_of_domain)  
 
-        C, D, y1, y2 = datapoint_gen(A, B, E)
+    C, D, y1, y2 = datapoint_gen(A, B, E)
 
-        inputs = np.column_stack((A, B, C, D, E))
-        outputs = np.column_stack((y1, y2))
+    inputs = np.column_stack((A, B, C, D, E))
+    outputs = np.column_stack((y1, y2))
 
-        return inputs, outputs 
+    return inputs, outputs 
 
 
+def scm_indep(n_points, seed = 5):
+    np.random.seed(seed)
+    inputs = np.zeros((n_points, 5))
+    outputs = np.zeros((n_points, 2))
 
+    A = np.random.uniform(-2, 4, size=n_points)
+    B = np.random.uniform(3, 5.5, size=n_points)
+    E = np.random.uniform(0, 8, size=n_points)
+
+    # B = np.random.uniform(0, 0.1, size=n_points)
+    # E = np.random.uniform(0, 0.1, size=n_points)
+
+    # C = np.random.uniform(0, 0.1, size=n_points)  #[-9.7, 19.6]
+    # D = np.random.uniform(6, 11, size=n_points)   #[6, 11]
+
+    C = np.random.uniform(-9.8, 19.6, size=n_points)  #[-9.7, 19.6]
+    D = np.random.uniform(6, 11, size=n_points)   #[6, 11]
+    
+    y1 = 3*A**2 + D**3 + A*D - D**2
+    y2 = - D**2 + 4*D + np.sqrt(E)  
+
+    inputs = np.column_stack((A, B, C, D, E))
+    outputs = np.column_stack((y1, y2))
+
+    return inputs, outputs 
+      
 
 def scm_indep_ood(n_ood, seed = 5):
-        np.random.seed(seed)
-        inputs = np.zeros((n_ood, 5))
-        outputs = np.zeros((n_ood, 2))
+    np.random.seed(seed)
+    inputs = np.zeros((n_ood, 5))
+    outputs = np.zeros((n_ood, 2))
 
-        A = np.random.uniform(-4, 5, size=n_ood)
-        B = np.random.uniform(1, 3.4, size=n_ood)
-        E = np.random.uniform(3, 9, size=n_ood)  
+    A = np.random.uniform(-4, 5, size=n_ood)
+    B = np.random.uniform(1, 3.4, size=n_ood)
+    E = np.random.uniform(3, 9, size=n_ood)  
 
-        _, _, y1, y2 = datapoint_gen(A, B, E)
+    _, _, y1, y2 = datapoint_gen(A, B, E)
 
-        C = np.random.uniform(-19.4, 24.3, size=n_ood)  
-        D = np.random.uniform(2, 6.8, size=n_ood)   
+    C = np.random.uniform(-19.4, 24.3, size=n_ood)  
+    D = np.random.uniform(2, 6.8, size=n_ood)   
 
-        inputs = np.column_stack((A, B, C, D, E))
-        outputs = np.column_stack((y1, y2))
+    inputs = np.column_stack((A, B, C, D, E))
+    outputs = np.column_stack((y1, y2))
 
-        return inputs, outputs 
+    return inputs, outputs 
      
 
 
 
 def scm_diff_rand_model(n_diff_model, intv_info = False, seed = 5):
-        np.random.seed(seed)
-        inputs = np.zeros((n_diff_model, 5))
-        outputs = np.zeros((n_diff_model, 2))
+    np.random.seed(seed)
+    inputs = np.zeros((n_diff_model, 5))
+    outputs = np.zeros((n_diff_model, 2))
 
-        A = np.random.uniform(-2, 4, size=n_diff_model)
-        B = np.random.uniform(3, 5.5, size=n_diff_model)
-        E = np.random.uniform(0, 8, size=n_diff_model) 
+    A = np.random.uniform(-2, 4, size=n_diff_model)
+    B = np.random.uniform(3, 5.5, size=n_diff_model)
+    E = np.random.uniform(0, 8, size=n_diff_model) 
 
-        C, D, y1, y2 = datapoint_gen_diff_rand_model(n_diff_model, A, B, E)
+    C, D, y1, y2 = datapoint_gen_diff_rand_model(n_diff_model, A, B, E)
 
-        inputs = np.column_stack((A, B, C, D, E))
-        outputs = np.column_stack((y1, y2))
+    inputs = np.column_stack((A, B, C, D, E))
+    outputs = np.column_stack((y1, y2))
 
-        return inputs, outputs 
+    return inputs, outputs 
 
 
 
 def scm_diff_model(n_diff_model, intv_info = False, seed = 5):
-        np.random.seed(seed)
-        inputs = np.zeros((n_diff_model, 5))
-        outputs = np.zeros((n_diff_model, 2))
+    np.random.seed(seed)
+    inputs = np.zeros((n_diff_model, 5))
+    outputs = np.zeros((n_diff_model, 2))
 
-        A = np.random.uniform(-2, 4, size=n_diff_model)
-        B = np.random.uniform(3, 5.5, size=n_diff_model)
-        E = np.random.uniform(0, 8, size=n_diff_model)
+    A = np.random.uniform(-2, 4, size=n_diff_model)
+    B = np.random.uniform(3, 5.5, size=n_diff_model)
+    E = np.random.uniform(0, 8, size=n_diff_model)
 
-        C, D, y1, y2 = datapoint_gen_diff_model(n_diff_model, A, B, E)
+    C, D, y1, y2 = datapoint_gen_diff_model(n_diff_model, A, B, E)
 
-        inputs = np.column_stack((A, B, C, D, E))
-        outputs = np.column_stack((y1, y2))
+    inputs = np.column_stack((A, B, C, D, E))
+    outputs = np.column_stack((y1, y2))
 
-        if intv_info:
-            intervention = np.array([0, 0, 0, 0, 0])
-            intervention = np.tile(intervention, (n_diff_model, 1))
-            inputs = np.column_stack((intervention, inputs))
+    if intv_info:
+        intervention = np.array([0, 0, 0, 0, 0])
+        intervention = np.tile(intervention, (n_diff_model, 1))
+        inputs = np.column_stack((intervention, inputs))
 
-        return inputs, outputs 
+    return inputs, outputs 
 
 
 

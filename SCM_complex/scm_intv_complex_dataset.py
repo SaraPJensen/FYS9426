@@ -63,7 +63,7 @@ def intv_c(sub_n_datapoints, intv_info = False):
     B = np.random.uniform(3, 5.5, size=sub_n_datapoints)
     E = np.random.uniform(0, 8, size=sub_n_datapoints)
 
-    C = np.random.uniform(-9.8, 3.6, size=sub_n_datapoints)  #Intervention
+    C = np.random.uniform(-9.8, 19.6, size=sub_n_datapoints)  #Intervention
     D = 2*B 
     Y1 = 3*A**2 + D**3 + A*D - D**2
     Y2 = - D**2 + 4*D + np.sqrt(E)
@@ -140,6 +140,8 @@ def scm_intv_dataset_gen(n_datapoints, intv_info = False, seed = 5):
     return inputs, outputs
 
 
+
+
 def scm_intv_c_d_dataset_gen(n_datapoints, intv_info = False, seed = 5):
     np.random.seed(seed)
 
@@ -206,7 +208,7 @@ def intv_c_ood(sub_n_datapoints, intv_info = False):
     B = np.random.uniform(1, 3.4, size=sub_n_datapoints)
     E = np.random.uniform(3, 9, size=sub_n_datapoints)
 
-    C = np.random.uniform(-19.4, 24.3, size=sub_n_datapoints)   
+    C = np.random.uniform(-19.2, 24.2, size=sub_n_datapoints)   
     D = 2*B 
     Y1 = 3*A**2 + D**3 + A*D - D**2
     Y2 = - D**2 + 4*D + np.sqrt(E)
