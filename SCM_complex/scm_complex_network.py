@@ -18,17 +18,19 @@ np.random.seed(2)
 #Model and dataset parameters 
 learning_rate = 1e-3
 epochs = 1000
-Scaling = True 
+Scaling = True
+Deep = True
+
 Intervene = False
 C_D = False
-Deep = False
 Independent = False
 Simplify = True
 
-Output_var = 'y1'
-#Output_var = 'y2'
+#Output_var = 'y1'
+Output_var = 'y2'
 
 if __name__ == "__main__":
+    print('You are a nice woman')
     print("Complex data")
     print("Output variable: ", Output_var)
     print("Normalisation: ", Scaling)
@@ -63,9 +65,33 @@ class MyDataset(Dataset):
             # print("Min: ", torch.min(self.inputs[:, 3]))
             # print("Max: ", torch.max(self.inputs[:, 3]))
 
+            # print()
+            # print("Y1")
+            # print("Min: ", torch.min(self.targets))
+            # print("Max: ", torch.max(self.targets))
+
+            # input()
+
+
 
         elif output_var == 'y2':
             self.targets = targets[:,1].unsqueeze(dim = 1)
+            # print()
+            # print("C:")
+            # print("Min: ", torch.min(self.inputs[:, 2]))
+            # print("Max: ", torch.max(self.inputs[:, 2]))
+            
+            # print()
+            # print("D:")
+            # print("Min: ", torch.min(self.inputs[:, 3]))
+            # print("Max: ", torch.max(self.inputs[:, 3]))
+
+            # print()
+            # print("Y1")
+            # print("Min: ", torch.min(self.targets))
+            # print("Max: ", torch.max(self.targets))
+
+            # input()
             if simplify: 
                 self.inputs = self.inputs[:, [3, 4]]   #Y2 is only directly dependent on D and E
         else: 
@@ -303,7 +329,7 @@ if __name__ == "__main__":
         diff_mod_torch_dataset.scale_outputs(trained_scaler_outputs)
     diff_mod_loader = torch.utils.data.DataLoader(diff_mod_torch_dataset, batch_size = 1, shuffle = True)
 
-    
+
     ### Define a dataset with different SCM between the inputs, here the inputs are independent of each other
     #For now, this is never interventional 
 
@@ -512,7 +538,10 @@ if __name__ == "__main__":
 
 
             file = open(f"progress/{Output_var}/{filename}.csv", "a")
-            file.write(f"{epoch},{running_loss/len(train_loader)},{val_loss/len(val_loader)},{test_loss/len(test_loader)},{diff_seed_loss/len(diff_seed_test_loader)},{ood_loss/len(ood_test_loader)},{diff_mod_loss/len(diff_mod_loader)},{diff_mod_rand_loss/len(diff_mod_rand_loader)},{obsv_test_loss/len(obsv_test_loader)},{intv_test_loss/len(intv_test_loader)},{obsv_normal_loss/len(normal_test_loader)} \n")
+            if Scaling:  #Multiply the losses with 100, or some of them become 0 when saving
+                file.write(f"{epoch},{100*running_loss/len(train_loader)},{100*val_loss/len(val_loader)},{100*test_loss/len(test_loader)},{100*diff_seed_loss/len(diff_seed_test_loader)},{100*ood_loss/len(ood_test_loader)},{100*diff_mod_loss/len(diff_mod_loader)},{100*diff_mod_rand_loss/len(diff_mod_rand_loader)},{100*obsv_test_loss/len(obsv_test_loader)},{100*intv_test_loss/len(intv_test_loader)},{100*obsv_normal_loss/len(normal_test_loader)} \n")
+            else:
+                file.write(f"{epoch},{running_loss/len(train_loader)},{val_loss/len(val_loader)},{test_loss/len(test_loader)},{diff_seed_loss/len(diff_seed_test_loader)},{ood_loss/len(ood_test_loader)},{diff_mod_loss/len(diff_mod_loader)},{diff_mod_rand_loss/len(diff_mod_rand_loader)},{obsv_test_loss/len(obsv_test_loader)},{intv_test_loss/len(intv_test_loader)},{obsv_normal_loss/len(normal_test_loader)} \n")
             file.close()
 
             if current_val_loss < best_val_loss:

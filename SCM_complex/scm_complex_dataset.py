@@ -2,7 +2,7 @@ import numpy as np
 from scipy.stats import truncnorm
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots(1, 1)
-
+from sklearn.preprocessing import MinMaxScaler
 
 
 
@@ -11,9 +11,6 @@ def datapoint_gen(a, b, e):
     c = 5*a - a/d
     y1 = 3*a**2 + d**3 + a*d - d**2
     y2 = - d**2 + 4*d + np.sqrt(e)
-
-    if e.any() < 0:
-        print(e)
 
     return c, d, y1, y2
 
@@ -31,10 +28,19 @@ def datapoint_gen_diff_rand_model(n_datapoints, a, b, e):
 
 def datapoint_gen_diff_model(n_datapoints, a, b, e):
 
-    d = 0.8*b - 0.5*a
+    d = 0.8*b + 0.5*a
     c = 3*a + 0.8*d
-    y1 = 3*a**2 + d**3 + a*d - d**2
-    y2 = - d**2 + 4*d + np.sqrt(e)
+    #For now, C [-3, 14], D [0.6, 5.2], should be [-9.8, 19.6] and [6, 11]
+
+    #Ensure that they are within the same range as the training data, to exclude this as a source of error
+    C_scaler = MinMaxScaler(feature_range=(-9.77, 19.59))
+    c = C_scaler.fit_transform(c.reshape(-1, 1)).reshape(-1)
+
+    D_scaler = MinMaxScaler(feature_range=(6, 11))
+    d = D_scaler.fit_transform(d.reshape(-1, 1)).reshape(-1)
+
+    y1 = 3*a**2 + d**3 + a*d - d**2   #Now: [179.96, 1301.5]
+    y2 = - d**2 + 4*d + np.sqrt(e)   #Now: [-75.84, -9.26]
 
     return c, d, y1, y2
 
@@ -125,9 +131,13 @@ def scm_out_of_domain(n_out_of_domain, seed = 5):
     inputs = np.zeros((n_out_of_domain, 5))
     outputs = np.zeros((n_out_of_domain, 2))
 
-    A = np.random.uniform(-4, 5, size=n_out_of_domain)
-    B = np.random.uniform(1, 3.4, size=n_out_of_domain)
-    E = np.random.uniform(3, 9, size=n_out_of_domain)  
+    A = np.random.uniform(-3, 5, size=n_out_of_domain)
+    B = np.random.uniform(0.5, 4.5, size=n_out_of_domain)
+    E = np.random.uniform(2, 7, size=n_out_of_domain)
+
+    # A = np.random.uniform(-4, 5, size=n_out_of_domain)
+    # B = np.random.uniform(1, 3.4, size=n_out_of_domain)
+    # E = np.random.uniform(3, 9, size=n_out_of_domain)  
 
     C, D, y1, y2 = datapoint_gen(A, B, E)
 
@@ -145,12 +155,6 @@ def scm_indep(n_points, seed = 5):
     A = np.random.uniform(-2, 4, size=n_points)
     B = np.random.uniform(3, 5.5, size=n_points)
     E = np.random.uniform(0, 8, size=n_points)
-
-    # B = np.random.uniform(0, 0.1, size=n_points)
-    # E = np.random.uniform(0, 0.1, size=n_points)
-
-    # C = np.random.uniform(0, 0.1, size=n_points)  #[-9.7, 19.6]
-    # D = np.random.uniform(6, 11, size=n_points)   #[6, 11]
 
     C = np.random.uniform(-9.8, 19.6, size=n_points)  #[-9.7, 19.6]
     D = np.random.uniform(6, 11, size=n_points)   #[6, 11]
