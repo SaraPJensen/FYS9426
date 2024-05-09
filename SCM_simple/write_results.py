@@ -47,8 +47,7 @@ def write_progress(filename, scaling_info, save_file):
 
 
 
-
-output_var = "y1"
+output_var = "deeeeep_y1"
 #output_var = "y2"
 
 save_filename = f"{output_var}_summary.csv"

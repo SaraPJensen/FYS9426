@@ -1,7 +1,7 @@
 import torch 
 import torch.nn as nn
 import numpy as np
-from SCM_simple.scm_simple_dataset import scm_dataset_gen, scm_out_of_domain, scm_diff_seed, Franke_data, super_simple, scm_diff_model, scm_diff_rand_model, scm_indep_ood, scm_normal_dist, scm_indep
+from SCM_simple.scm_simple_dataset import scm_dataset_gen, scm_out_of_domain, scm_diff_seed, scm_diff_model, scm_diff_rand_model, scm_indep_ood, scm_normal_dist, scm_indep
 from SCM_simple.scm_intv_simple_dataset import scm_intv_dataset_gen, scm_intv_ood, scm_intv_c_d_dataset_gen
 from torch.optim import Adam
 from tqdm import tqdm
@@ -9,227 +9,39 @@ from torch.utils.data import Dataset
 import torch.nn.init as init
 from lime import lime_tabular
 from sklearn.preprocessing import MinMaxScaler
+from SCM_simple.scm_simple_network import MyDataset, TestModel, DeepModel
+
+
 
 torch.manual_seed(2)
 np.random.seed(2)
 
 
 #regions Parameters
-#Model and dataset parameters 
+#Hyperparameters
 learning_rate = 1e-3
 epochs = 1000
-Scaling = True
-Deep = True
-
+Scaling = True 
 Intervene = False
 C_D = False
-Independent = False
-Simplify = True
+Deep = False
+Independent = True
+Simplify = False
 
-#Output_var = 'y1'
-Output_var = 'y2'
-
-if __name__ == "__main__":
-    print('You are a nice woman')
-    print("Complex data")
-    print("Output variable: ", Output_var)
-    print("Normalisation: ", Scaling)
-    print("Intervention: ", Intervene)
-    print("Intervene C, D :", C_D)
-    print("Independent inputs: ", Independent)
-    print("Deep: ", Deep)
-    print("Simplify: ", Simplify)
+Output_var = 'y1'
+#Output_var = 'y2'
 
 
-#region Dataset functions
+print("Complex data")
+print("Model trained on:")
+print("Output variable: ", Output_var)
+print("Normalisation: ", Scaling)
+print("Intervention: ", Intervene)
+print("Intervene C, D :", C_D)
+print("Independent inputs: ", Independent)
+print("Deep: ", Deep)
+print("Simple: ", Simplify)
 
-
-class MyDataset(Dataset):
-    def __init__(self, inputs, targets, output_var, simplify):
-        self.inputs = inputs
-        self.output_var = output_var
-
-        if output_var == 'y1':
-            self.targets = targets[:,0].unsqueeze(dim = 1)
-
-            if simplify: 
-                self.inputs = self.inputs[:, [0, 3]] # Y1 is only directly dependent on A and D
-
-            # print()
-            # print("C:")
-            # print("Min: ", torch.min(self.inputs[:, 2]))
-            # print("Max: ", torch.max(self.inputs[:, 2]))
-            
-            # print()
-            # print("D:")
-            # print("Min: ", torch.min(self.inputs[:, 3]))
-            # print("Max: ", torch.max(self.inputs[:, 3]))
-
-            # print()
-            # print("Y1")
-            # print("Min: ", torch.min(self.targets))
-            # print("Max: ", torch.max(self.targets))
-
-            # input()
-
-
-
-        elif output_var == 'y2':
-            self.targets = targets[:,1].unsqueeze(dim = 1)
-            # print()
-            # print("C:")
-            # print("Min: ", torch.min(self.inputs[:, 2]))
-            # print("Max: ", torch.max(self.inputs[:, 2]))
-            
-            # print()
-            # print("D:")
-            # print("Min: ", torch.min(self.inputs[:, 3]))
-            # print("Max: ", torch.max(self.inputs[:, 3]))
-
-            # print()
-            # print("Y1")
-            # print("Min: ", torch.min(self.targets))
-            # print("Max: ", torch.max(self.targets))
-
-            # input()
-            if simplify: 
-                self.inputs = self.inputs[:, [3, 4]]   #Y2 is only directly dependent on D and E
-        else: 
-            print("Invalid input variable")
-            exit()
-
-        self.unscaled_inputs = self.inputs
-        self.unscaled_targets = self.targets
-
-
-
-    def fit_scaling_inputs(self, scaler_inputs, training_data):
-        inputs, _ = training_data[:]
-        scaler_inputs.fit(inputs)
-        self.scaler_inputs = scaler_inputs
-        self.inputs = torch.from_numpy(self.scaler_inputs.transform(self.inputs))  #scale all the input features in the dataset, both training and test, according to the training data
-        self.inputs = self.inputs.to(torch.float32)
-
-        return self.scaler_inputs
-
-    def scale_inputs(self, trained_scaler_inputs):
-        self.scaler_inputs = trained_scaler_inputs
-        self.inputs = torch.from_numpy(self.scaler_inputs.transform(self.inputs))
-        self.inputs = self.inputs.to(torch.float32)
-
-    def fit_scaling_outputs(self, scaler_outputs, training_data):
-        _, outputs = training_data[:]
-        scaler_outputs.fit(outputs.reshape(-1, 1))
-        self.scaler_outputs = scaler_outputs
-        self.targets = torch.from_numpy(self.scaler_outputs.transform(self.targets.reshape(-1, 1)))  #scale all the input features in the dataset, both training and test, according to the training data
-        self.targets = self.targets.to(torch.float32)
-
-        return self.scaler_outputs
-
-    def scale_outputs(self, trained_scaler_outputs):
-        self.scaler_outputs = trained_scaler_outputs
-        self.targets = torch.from_numpy(self.scaler_outputs.transform(self.targets.reshape(-1, 1)))
-        self.targets = self.targets.to(torch.float32)
-
-
-    def rescale_outputs(self, outputs):
-        rescaled_outputs = torch.from_numpy(self.scaler_outputs.inverse_transform(outputs))
-
-        return rescaled_outputs
-    
-    def __getitem__(self, index):
-        x = self.inputs[index]
-        y = self.targets[index]
-
-        return x, y
-    
-
-    def __len__(self):
-        return len(self.inputs)
-    
-
-
-#endregion
-
-
-#region ML model functions
-
-# Basic Neural Network
-class TestModel(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):
-        super(TestModel, self).__init__() 
-
-        # Original: 2 hidden layers
-        self.linear_relu_stack = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, output_size),
-        )
-
-        # Apply Kaiming He initialization to all Linear layers in the Sequential model
-        self.linear_relu_stack.apply(self.init_weights)
-
-    def init_weights(self, m):
-        if isinstance(m, nn.Linear):
-            init.kaiming_normal_(m.weight, nonlinearity='relu')
-            if m.bias is not None:
-                init.constant_(m.bias, 0)
-
-    def forward(self, x):
-        x = torch.Tensor(x)
-        x = self.linear_relu_stack(x)
-
-        return x
-    
-
-
-class DeepModel(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):
-        super(DeepModel, self).__init__() 
-
-        self.linear_relu_stack = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, output_size),
-        )
-
-        # Apply Kaiming He initialization to all Linear layers in the Sequential model
-        self.linear_relu_stack.apply(self.init_weights)
-
-    def init_weights(self, m):
-        if isinstance(m, nn.Linear):
-            init.kaiming_normal_(m.weight, nonlinearity='relu')
-            if m.bias is not None:
-                init.constant_(m.bias, 0)
-
-
-    def forward(self, x):
-        x = torch.Tensor(x)
-        x = self.linear_relu_stack(x)
-
-        return x
-        
-#endregion
 
 if __name__ == "__main__":
 
@@ -270,6 +82,7 @@ if __name__ == "__main__":
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle = True)
     val_loader = torch.utils.data.DataLoader(val_data, batch_size = 1, shuffle = True)
     test_loader = torch.utils.data.DataLoader(test_data, batch_size = 1, shuffle = True)
+
 
 
     ### Define a dataset with different seed
@@ -345,7 +158,7 @@ if __name__ == "__main__":
         diff_mod_rand_torch_dataset.scale_outputs(trained_scaler_outputs)
     diff_mod_rand_loader = torch.utils.data.DataLoader(diff_mod_rand_torch_dataset, batch_size = 1, shuffle = True)
 
-    
+
     #Define a dataset with interventional data, using a different seed from the training
     n_intv_testing = 500
     intv_inputs, intv_targets = scm_intv_dataset_gen(n_intv_testing, seed = 54321)
@@ -374,7 +187,7 @@ if __name__ == "__main__":
     obsv_test_loader = torch.utils.data.DataLoader(obsv_torch_dataset, batch_size = 1, shuffle = True)
 
 
-    
+
     #Define a dataset with observational data with the same input ranges, but with a normal, rather than uniform distribution
     n_normal_testing = 500
     normal_inputs, normal_targets = scm_normal_dist(n_normal_testing, seed = 5)
@@ -389,16 +202,17 @@ if __name__ == "__main__":
     normal_test_loader = torch.utils.data.DataLoader(normal_torch_dataset, batch_size = 1, shuffle = True)
 
 
+
+
     #endregion
 
 
     #region Create ML Model
 
-
     #Network parameters
     input_size = inputs.shape[1]
-    if Simplify: 
-        input_size = 2
+    if Simplify:
+        input_size = 3
     output_size = 1 
     hidden_size = 120
 
@@ -409,11 +223,9 @@ if __name__ == "__main__":
     else:
         model = TestModel(input_size, hidden_size, output_size)
     loss_fn = nn.MSELoss() 
-    optimizer = Adam(model.parameters(), lr=learning_rate)
 
     #endregion
 
-    #region Train model
 
     file_intv = ''
     if Intervene:
@@ -438,136 +250,15 @@ if __name__ == "__main__":
         filename = "deeeeep_" + filename
 
 
-    file = open(f"progress/{Output_var}/{filename}.csv", "w")
-    file.write("Epoch,train_loss,val_loss,test_loss,diff_seed_loss,out_of_domain_loss,diff_model_loss,diff_mod_rand_loss,obsv_test_loss,intv_test_loss,obsv_normal_loss \n")
+    file = open(f"progress/{Output_var}/test_model/{filename}.csv", "w")
+    file.write("train_loss,val_loss,test_loss,diff_seed_loss,out_of_domain_loss,diff_model_loss,diff_mod_rand_loss,obsv_test_loss,intv_test_loss,obsv_normal_loss \n")
     file.close()
 
 
-    with tqdm(range(epochs + 1), desc='Epochs', unit='epoch', leave=True, bar_format='{desc}: {percentage:3.0f}%|{bar}|{postfix}') as t:
-        best_val_loss = 500000
-        best_epoch = 0
-
-        for epoch in t:
-
-            model.train()
-            running_loss = 0 
-            for inputs, targets in train_loader:
-                #Forward pass
-                optimizer.zero_grad()
-                pred = model(inputs)
-                loss = loss_fn(pred, targets) 
-
-                # Backward pass
-                loss.backward()
-                optimizer.step()
-                running_loss += loss.item()
-
-                
-
-            t.set_postfix(Loss=f'{(running_loss/len(train_loader)):.6f}') 
-            t.refresh() # Refresh to show postfix
-
-            model.eval()
-            val_loss = 0
-
-            with torch.no_grad():
-                for val_inputs, val_targets in val_loader:
-                    val_pred = model(val_inputs) 
-                    loss = loss_fn(val_pred, val_targets) 
-                    val_loss += loss.item()
-
-            current_val_loss = val_loss/len(val_loader)
-
-            test_loss = 0
-            with torch.no_grad():
-                for inputs, targets in test_loader:
-                    pred = model(inputs)
-                    loss = loss_fn(pred, targets) 
-                    test_loss += loss.item()
-
-            diff_seed_loss = 0
-            with torch.no_grad():
-                for inputs, targets in diff_seed_test_loader:
-                    pred = model(inputs)
-                    loss = loss_fn(pred, targets) 
-                    diff_seed_loss += loss.item()
-
-
-            ood_loss = 0
-            with torch.no_grad():
-                for inputs, targets in ood_test_loader:
-                    pred = model(inputs)
-                    loss = loss_fn(pred, targets) 
-                    ood_loss += loss.item()
-
-            diff_mod_loss = 0
-            with torch.no_grad():
-                for inputs, targets in diff_mod_loader:
-                    pred = model(inputs)
-                    loss = loss_fn(pred, targets) 
-                    diff_mod_loss += loss.item()
-
-            diff_mod_rand_loss = 0
-            with torch.no_grad():
-                for inputs, targets in diff_mod_rand_loader:
-                    pred = model(inputs)
-                    loss = loss_fn(pred, targets) 
-                    diff_mod_rand_loss += loss.item()
-
-            obsv_test_loss = 0
-            with torch.no_grad():
-                for inputs, targets in obsv_test_loader:
-                    pred = model(inputs)
-                    loss = loss_fn(pred, targets) 
-                    obsv_test_loss += loss.item()
-
-
-            intv_test_loss = 0
-            with torch.no_grad():
-                for inputs, targets in intv_test_loader:
-                    pred = model(inputs)
-                    loss = loss_fn(pred, targets) 
-                    intv_test_loss += loss.item()
-
-            obsv_normal_loss = 0
-            with torch.no_grad():
-                for inputs, targets in normal_test_loader:
-                    pred = model(inputs)
-                    loss = loss_fn(pred, targets) 
-                    obsv_normal_loss += loss.item()
-
-
-            file = open(f"progress/{Output_var}/{filename}.csv", "a")
-            if Scaling:  #Multiply the losses with 100, or some of them become 0 when saving
-                file.write(f"{epoch},{100*running_loss/len(train_loader)},{100*val_loss/len(val_loader)},{100*test_loss/len(test_loader)},{100*diff_seed_loss/len(diff_seed_test_loader)},{100*ood_loss/len(ood_test_loader)},{100*diff_mod_loss/len(diff_mod_loader)},{100*diff_mod_rand_loss/len(diff_mod_rand_loader)},{100*obsv_test_loss/len(obsv_test_loader)},{100*intv_test_loss/len(intv_test_loader)},{100*obsv_normal_loss/len(normal_test_loader)} \n")
-            else:
-                file.write(f"{epoch},{running_loss/len(train_loader)},{val_loss/len(val_loader)},{test_loss/len(test_loader)},{diff_seed_loss/len(diff_seed_test_loader)},{ood_loss/len(ood_test_loader)},{diff_mod_loss/len(diff_mod_loader)},{diff_mod_rand_loss/len(diff_mod_rand_loader)},{obsv_test_loss/len(obsv_test_loader)},{intv_test_loss/len(intv_test_loader)},{obsv_normal_loss/len(normal_test_loader)} \n")
-            file.close()
-
-            if current_val_loss < best_val_loss:
-                best_epoch = epoch
-                best_val_loss = current_val_loss
-                train_loss_best_model = running_loss/len(train_loader) 
-                save_filename = f"saved_models/{Output_var}/best_{filename}.pth"
-                torch.save(model, save_filename)
-
-            if epoch % 100 == 0:
-
-                print(f'Epoch {epoch+1}/{epochs} \nTraining Loss: {running_loss/len(train_loader):.6f} '
-                f'\nValidation Loss: {val_loss/len(val_loader):.6f}')
-                print()
-
-    print()
-    print("Finished training")
-
-    #endregion
-
-
+    
     #region Test with other data
     model = torch.load(f"saved_models/{Output_var}/best_{filename}.pth")
 
-    print("Best epoch: ", best_epoch)
-    
 
     model.eval()
     train_loss = 0
@@ -696,14 +387,10 @@ if __name__ == "__main__":
             loss = loss_fn(pred, targets) 
             obsv_normal_loss += loss.item()
 
-    print(f'Observational normal loss: {obsv_normal_loss/len(normal_test_loader):.6f}')
-    print()
 
 
-    file = open(f"progress/{Output_var}/{filename}.csv", "a")
-    file.write(f"{best_epoch},{train_loss/len(train_loader)},{val_loss/len(val_loader)},{test_loss/len(test_loader)},{diff_seed_loss/len(diff_seed_test_loader)},{ood_loss/len(ood_test_loader)},{diff_mod_loss/len(diff_mod_loader)},{diff_mod_rand_loss/len(diff_mod_rand_loader)},{obsv_test_loss/len(obsv_test_loader)},{intv_test_loss/len(intv_test_loader)},{obsv_normal_loss/len(normal_test_loader)} \n")
+    file = open(f"progress/{Output_var}/test_model/{filename}.csv", "a")
+    file.write(f"{train_loss/len(train_loader)},{val_loss/len(val_loader)},{test_loss/len(test_loader)},{diff_seed_loss/len(diff_seed_test_loader)},{ood_loss/len(ood_test_loader)},{diff_mod_loss/len(diff_mod_loader)},{diff_mod_rand_loss/len(diff_mod_rand_loader)},{obsv_test_loss/len(obsv_test_loader)},{intv_test_loss/len(intv_test_loader)},{obsv_normal_loss/len(normal_test_loader)} \n")
     file.close()
-
-    #endregion
 
 

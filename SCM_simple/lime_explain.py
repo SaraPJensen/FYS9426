@@ -1,14 +1,14 @@
 import torch 
 import torch.nn as nn
 import numpy as np
-from scm_simple_dataset import scm_dataset_gen, scm_out_of_domain, scm_diff_seed, Franke_data, super_simple, scm_diff_model, scm_diff_rand_model
-from scm_intv_simple_dataset import scm_intv_dataset_gen, scm_intv_diff_seed, scm_intv_ood, scm_intv_c_d_dataset_gen
+from SCM_simple.scm_simple_dataset import scm_dataset_gen, scm_out_of_domain, scm_diff_seed, scm_diff_model, scm_diff_rand_model
+from SCM_simple.scm_intv_simple_dataset import scm_intv_dataset_gen, scm_intv_diff_seed, scm_intv_ood, scm_intv_c_d_dataset_gen
 from torch.utils.data import Dataset
 import torch.nn.init as init
 import lime
 from lime import lime_tabular
 from sklearn.preprocessing import MinMaxScaler
-from scm_simple_network import TestModel
+from SCM_simple.scm_simple_network import TestModel
 
 
 torch.manual_seed(2)

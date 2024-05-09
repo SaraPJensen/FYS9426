@@ -1,7 +1,7 @@
 import torch 
 import torch.nn as nn
 import numpy as np
-from scm_complex_dataset import scm_dataset_gen, scm_out_of_domain, scm_diff_seed, Franke_data, super_simple, scm_diff_model, scm_diff_rand_model, scm_indep_ood, scm_normal_dist, scm_indep
+from scm_complex_dataset import scm_dataset_gen, scm_out_of_domain, scm_diff_seed, scm_diff_model, scm_diff_rand_model, scm_indep_ood, scm_normal_dist, scm_indep
 from scm_intv_complex_dataset import scm_intv_dataset_gen, scm_intv_ood, scm_intv_c_d_dataset_gen
 from torch.optim import Adam
 from tqdm import tqdm
@@ -18,19 +18,18 @@ np.random.seed(2)
 #Model and dataset parameters 
 learning_rate = 1e-3
 epochs = 1000
+Deep = False
 Scaling = True
-Deep = True
 
 Intervene = False
 C_D = False
-Independent = False
+Independent = True
 Simplify = True
 
 #Output_var = 'y1'
 Output_var = 'y2'
 
 if __name__ == "__main__":
-    print('You are a nice woman')
     print("Complex data")
     print("Output variable: ", Output_var)
     print("Normalisation: ", Scaling)
@@ -52,26 +51,39 @@ class MyDataset(Dataset):
         if output_var == 'y1':
             self.targets = targets[:,0].unsqueeze(dim = 1)
 
+
             if simplify: 
                 self.inputs = self.inputs[:, [0, 3]] # Y1 is only directly dependent on A and D
 
-            # print()
-            # print("C:")
-            # print("Min: ", torch.min(self.inputs[:, 2]))
-            # print("Max: ", torch.max(self.inputs[:, 2]))
-            
-            # print()
-            # print("D:")
-            # print("Min: ", torch.min(self.inputs[:, 3]))
-            # print("Max: ", torch.max(self.inputs[:, 3]))
+                # print()
+                # print("D:")
+                # print("Min: ", torch.min(self.inputs[:, 1]))
+                # print("Max: ", torch.max(self.inputs[:, 1]))
 
-            # print()
-            # print("Y1")
-            # print("Min: ", torch.min(self.targets))
-            # print("Max: ", torch.max(self.targets))
+                # print()
+                # print("Y1")
+                # print("Min: ", torch.min(self.targets))
+                # print("Max: ", torch.max(self.targets))
 
-            # input()
+                # input()
 
+            # else:
+                # print()
+                # print("C:")
+                # print("Min: ", torch.min(self.inputs[:, 2]))
+                # print("Max: ", torch.max(self.inputs[:, 2]))
+                
+                # print()
+                # print("D:")
+                # print("Min: ", torch.min(self.inputs[:, 3]))
+                # print("Max: ", torch.max(self.inputs[:, 3]))
+
+                # print()
+                # print("Y1")
+                # print("Min: ", torch.min(self.targets))
+                # print("Max: ", torch.max(self.targets))
+
+                # input()
 
 
         elif output_var == 'y2':
@@ -87,11 +99,12 @@ class MyDataset(Dataset):
             # print("Max: ", torch.max(self.inputs[:, 3]))
 
             # print()
-            # print("Y1")
+            # print("Y2")
             # print("Min: ", torch.min(self.targets))
             # print("Max: ", torch.max(self.targets))
 
             # input()
+
             if simplify: 
                 self.inputs = self.inputs[:, [3, 4]]   #Y2 is only directly dependent on D and E
         else: 
@@ -295,7 +308,7 @@ if __name__ == "__main__":
 
 
     ### Define an out-of-domain dataset
-    n_ood = 500
+    n_ood = 5000
 
     if Intervene:
         ood_inputs, ood_targets = scm_intv_ood(n_ood)
@@ -312,6 +325,7 @@ if __name__ == "__main__":
         ood_torch_dataset.scale_inputs(trained_scaler_inputs)
         ood_torch_dataset.scale_outputs(trained_scaler_outputs)
     ood_test_loader = torch.utils.data.DataLoader(ood_torch_dataset, batch_size = 1, shuffle = True)
+
 
 
     ### Define a dataset with different SCM between the inputs

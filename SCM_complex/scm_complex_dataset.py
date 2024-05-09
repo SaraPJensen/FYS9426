@@ -17,7 +17,7 @@ def datapoint_gen(a, b, e):
 
 def datapoint_gen_diff_rand_model(n_datapoints, a, b, e):
 
-    c = np.random.uniform(-9.8, 19.6, size=n_datapoints)  #[-9.8, 19.6]
+    c = np.random.uniform(-9.78, 19.6, size=n_datapoints)  #[-9.8, 19.6]
     d = np.random.uniform(6, 11, size=n_datapoints)   #[6, 11]
 
     y1 = 3*a**2 + d**3 + a*d - d**2
@@ -173,14 +173,15 @@ def scm_indep_ood(n_ood, seed = 5):
     inputs = np.zeros((n_ood, 5))
     outputs = np.zeros((n_ood, 2))
 
-    A = np.random.uniform(-4, 5, size=n_ood)
-    B = np.random.uniform(1, 3.4, size=n_ood)
-    E = np.random.uniform(3, 9, size=n_ood)  
+    A = np.random.uniform(-3, 5, size=n_ood)
+    B = np.random.uniform(0.5, 4.5, size=n_ood)
+    E = np.random.uniform(2, 7, size=n_ood)
 
-    _, _, y1, y2 = datapoint_gen(A, B, E)
+    C = np.random.uniform(-14.667, 24.444, size=n_ood) 
+    D = np.random.uniform(1, 9, size=n_ood)   
 
-    C = np.random.uniform(-19.4, 24.3, size=n_ood)  
-    D = np.random.uniform(2, 6.8, size=n_ood)   
+    y1 = 3*A**2 + D**3 + A*D - D**2
+    y2 = - D**2 + 4*D + np.sqrt(E)
 
     inputs = np.column_stack((A, B, C, D, E))
     outputs = np.column_stack((y1, y2))
@@ -190,7 +191,7 @@ def scm_indep_ood(n_ood, seed = 5):
 
 
 
-def scm_diff_rand_model(n_diff_model, intv_info = False, seed = 5):
+def scm_diff_rand_model(n_diff_model, seed = 5):
     np.random.seed(seed)
     inputs = np.zeros((n_diff_model, 5))
     outputs = np.zeros((n_diff_model, 2))
@@ -208,7 +209,7 @@ def scm_diff_rand_model(n_diff_model, intv_info = False, seed = 5):
 
 
 
-def scm_diff_model(n_diff_model, intv_info = False, seed = 5):
+def scm_diff_model(n_diff_model, seed = 5):
     np.random.seed(seed)
     inputs = np.zeros((n_diff_model, 5))
     outputs = np.zeros((n_diff_model, 2))
@@ -221,11 +222,6 @@ def scm_diff_model(n_diff_model, intv_info = False, seed = 5):
 
     inputs = np.column_stack((A, B, C, D, E))
     outputs = np.column_stack((y1, y2))
-
-    if intv_info:
-        intervention = np.array([0, 0, 0, 0, 0])
-        intervention = np.tile(intervention, (n_diff_model, 1))
-        inputs = np.column_stack((intervention, inputs))
 
     return inputs, outputs 
 
