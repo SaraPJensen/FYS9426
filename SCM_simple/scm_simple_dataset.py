@@ -32,10 +32,10 @@ def datapoint_gen_diff_model(n_datapoints, a, b, e):
     c = 3*a - 0.8*d
 
     #Ensure that they are within the same range as the training data, to exclude this as a source of error
-    C_scaler = MinMaxScaler(feature_range=(10, 40))   
+    C_scaler = MinMaxScaler(feature_range=(-15, 90))   
     c = C_scaler.fit_transform(c.reshape(-1, 1)).reshape(-1)
 
-    D_scaler = MinMaxScaler(feature_range=(-15, 90))
+    D_scaler = MinMaxScaler(feature_range=(10, 40))
     d = D_scaler.fit_transform(d.reshape(-1, 1)).reshape(-1)
 
     y1 = 3.5*a + 0.5*d 
@@ -133,9 +133,13 @@ def scm_out_of_domain(n_out_of_domain, seed = 5):
     inputs = np.zeros((n_out_of_domain, 5))
     outputs = np.zeros((n_out_of_domain, 2))
 
+    # A = np.random.uniform(-3, 12, size=n_out_of_domain)  
+    # B = np.random.uniform(9, 22, size=n_out_of_domain)
+    # E = np.random.uniform(2, 8, size=n_out_of_domain)  
+
     A = np.random.uniform(-3, 12, size=n_out_of_domain)  
-    B = np.random.uniform(9, 22, size=n_out_of_domain)
-    E = np.random.uniform(2, 8, size=n_out_of_domain)  
+    B = np.random.uniform(13, 25, size=n_out_of_domain)
+    E = np.random.uniform(-2, 8, size=n_out_of_domain)
 
     C, D, y1, y2 = datapoint_gen(A, B, E)
 

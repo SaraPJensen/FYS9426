@@ -50,8 +50,8 @@ def write_progress(filename, save_file, Output_var, Deep, Scaling, Intv, C_D, In
 
 
 learning_rate = 0.001
-Output_var = 'y1'
-#Output_var = 'y2'
+#Output_var = 'y1'
+Output_var = 'y2'
 
 save_filename = f"progress/{Output_var}/{Output_var}_summary.csv"
 save_file = open(f"{save_filename}", "w")

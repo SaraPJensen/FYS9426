@@ -18,7 +18,7 @@ np.random.seed(2)
 #Model and dataset parameters 
 learning_rate = 1e-3
 epochs = 1000
-Deep = False
+Deep = True
 Scaling = True
 
 Intervene = False

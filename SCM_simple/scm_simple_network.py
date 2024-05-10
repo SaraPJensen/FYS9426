@@ -1,8 +1,8 @@
 import torch 
 import torch.nn as nn
 import numpy as np
-from SCM_simple.scm_simple_dataset import scm_dataset_gen, scm_out_of_domain, scm_diff_seed, Franke_data, super_simple, scm_diff_model, scm_diff_rand_model, scm_indep_ood, scm_normal_dist, scm_indep
-from SCM_simple.scm_intv_simple_dataset import scm_intv_dataset_gen, scm_intv_ood, scm_intv_c_d_dataset_gen
+from scm_simple_dataset import scm_dataset_gen, scm_out_of_domain, scm_diff_seed, scm_diff_model, scm_diff_rand_model, scm_indep_ood, scm_normal_dist, scm_indep
+from scm_intv_simple_dataset import scm_intv_dataset_gen, scm_intv_ood, scm_intv_c_d_dataset_gen
 from torch.optim import Adam
 from tqdm import tqdm
 from torch.utils.data import Dataset
@@ -18,19 +18,20 @@ np.random.seed(2)
 #Model and dataset parameters 
 learning_rate = 1e-3
 epochs = 1000
-Scaling = True
-Deep = True
+Scaling = False
+Deep = False
 
 Intervene = False
 C_D = False
 Independent = False
 Simplify = True
 
-#Output_var = 'y1'
-Output_var = 'y2'
+Output_var = 'y1'
+#Output_var = 'y2'
+
+Test = False
 
 if __name__ == "__main__":
-    print('You are a nice woman')
     print("Complex data")
     print("Output variable: ", Output_var)
     print("Normalisation: ", Scaling)
@@ -87,7 +88,7 @@ class MyDataset(Dataset):
             # print("Max: ", torch.max(self.inputs[:, 3]))
 
             # print()
-            # print("Y1")
+            # print("Y2")
             # print("Min: ", torch.min(self.targets))
             # print("Max: ", torch.max(self.targets))
 
@@ -235,7 +236,7 @@ if __name__ == "__main__":
 
     #region Make dataset 
 
-    n_datapoints = 3000
+    n_datapoints = 30000
     input_scaler = MinMaxScaler()
     output_scaler = MinMaxScaler()
 
@@ -295,7 +296,7 @@ if __name__ == "__main__":
 
 
     ### Define an out-of-domain dataset
-    n_ood = 500
+    n_ood = 50000
 
     if Intervene:
         ood_inputs, ood_targets = scm_intv_ood(n_ood)
@@ -345,7 +346,8 @@ if __name__ == "__main__":
         diff_mod_rand_torch_dataset.scale_outputs(trained_scaler_outputs)
     diff_mod_rand_loader = torch.utils.data.DataLoader(diff_mod_rand_torch_dataset, batch_size = 1, shuffle = True)
 
-    
+    if Test:
+        exit()
     #Define a dataset with interventional data, using a different seed from the training
     n_intv_testing = 500
     intv_inputs, intv_targets = scm_intv_dataset_gen(n_intv_testing, seed = 54321)
@@ -388,7 +390,7 @@ if __name__ == "__main__":
         normal_torch_dataset.scale_outputs(trained_scaler_outputs)
     normal_test_loader = torch.utils.data.DataLoader(normal_torch_dataset, batch_size = 1, shuffle = True)
 
-
+    
     #endregion
 
 

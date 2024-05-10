@@ -135,8 +135,8 @@ def scm_intv_c_d_dataset_gen(n_datapoints, seed = 5):
 
 def intv_a_ood(n_out_of_domain):
     A = np.random.uniform(-3, 12, size=n_out_of_domain)  
-    B = np.random.uniform(9, 22, size=n_out_of_domain)
-    E = np.random.uniform(2, 8, size=n_out_of_domain)  
+    B = np.random.uniform(13, 25, size=n_out_of_domain)
+    E = np.random.uniform(-2, 8, size=n_out_of_domain)  
 
     D = 2*B
     C = 5*A + D
@@ -151,8 +151,8 @@ def intv_a_ood(n_out_of_domain):
 
 def intv_b_ood(n_out_of_domain):
     A = np.random.uniform(-3, 12, size=n_out_of_domain)  
-    B = np.random.uniform(9, 22, size=n_out_of_domain)
-    E = np.random.uniform(2, 8, size=n_out_of_domain)  
+    B = np.random.uniform(13, 25, size=n_out_of_domain)
+    E = np.random.uniform(-2, 8, size=n_out_of_domain)  
 
     D = 2*B
     C = 5*A + D
@@ -167,11 +167,11 @@ def intv_b_ood(n_out_of_domain):
 
 def intv_c_ood(n_out_of_domain):
     A = np.random.uniform(-3, 12, size=n_out_of_domain)  
-    B = np.random.uniform(9, 22, size=n_out_of_domain)
-    E = np.random.uniform(2, 8, size=n_out_of_domain)  
+    B = np.random.uniform(13, 25, size=n_out_of_domain)
+    E = np.random.uniform(-2, 8, size=n_out_of_domain)   
 
     D = 2*B
-    C = np.random.uniform(19, 104, size=n_out_of_domain)  
+    C = np.random.uniform(11, 110, size=n_out_of_domain)  
     Y1 = 3.5*A + 0.5*D 
     Y2 = -2*D + 0.2*E
 
@@ -183,10 +183,10 @@ def intv_c_ood(n_out_of_domain):
 
 def intv_d_ood(n_out_of_domain):
     A = np.random.uniform(-3, 12, size=n_out_of_domain)  
-    B = np.random.uniform(9, 22, size=n_out_of_domain)
-    E = np.random.uniform(2, 8, size=n_out_of_domain)  
+    B = np.random.uniform(13, 25, size=n_out_of_domain)
+    E = np.random.uniform(-2, 8, size=n_out_of_domain)   
 
-    D = np.random.uniform(18, 44, size=n_out_of_domain)  
+    D = np.random.uniform(26, 50, size=n_out_of_domain)  
     C = 5*A + D
     Y1 = 3.5*A + 0.5*D 
     Y2 = -2*D + 0.2*E
@@ -199,8 +199,8 @@ def intv_d_ood(n_out_of_domain):
 
 def intv_e_ood(n_out_of_domain):
     A = np.random.uniform(-3, 12, size=n_out_of_domain)  
-    B = np.random.uniform(9, 22, size=n_out_of_domain)
-    E = np.random.uniform(2, 8, size=n_out_of_domain)  
+    B = np.random.uniform(13, 25, size=n_out_of_domain)
+    E = np.random.uniform(-2, 8, size=n_out_of_domain)  
 
     D = 2*B
     C = 5*A + D
