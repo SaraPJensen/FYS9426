@@ -95,8 +95,8 @@ write_progress(filename, save_file, Output_var, Deep, Scaling, Intervene, C_D, I
 
 
 
-Deep = True
-Scaling = False
+Deep = False
+Scaling = True
 
 Intervene = False
 C_D = False

@@ -18,16 +18,16 @@ np.random.seed(2)
 #Model and dataset parameters 
 learning_rate = 1e-3
 epochs = 1000
-Scaling = False
-Deep = False
+Scaling = True
+Deep = True
 
-Intervene = False
+Intervene = False 
 C_D = False
 Independent = False
 Simplify = True
 
-Output_var = 'y1'
-#Output_var = 'y2'
+#Output_var = 'y1'
+Output_var = 'y2'
 
 Test = False
 
@@ -236,7 +236,7 @@ if __name__ == "__main__":
 
     #region Make dataset 
 
-    n_datapoints = 30000
+    n_datapoints = 3000
     input_scaler = MinMaxScaler()
     output_scaler = MinMaxScaler()
 
@@ -296,7 +296,7 @@ if __name__ == "__main__":
 
 
     ### Define an out-of-domain dataset
-    n_ood = 50000
+    n_ood = 500
 
     if Intervene:
         ood_inputs, ood_targets = scm_intv_ood(n_ood)
