@@ -11,8 +11,7 @@ from lime import lime_tabular
 from sklearn.preprocessing import MinMaxScaler
 from scm_simple_network import MyDataset
 
-import sklearn
-import shap
+from alibi.explainers import ALE, plot_ale
 
 torch.manual_seed(2)
 np.random.seed(2)
@@ -20,15 +19,15 @@ np.random.seed(2)
 Scaling = False
 Deep = True
 
-Intervene = True 
+Intervene = False 
 C_D = False
 Independent = False
 Simplify = False
 
-Output_var = 'y1'
-#Output_var = 'y2'
+#Output_var = 'y1'
+Output_var = 'y2'
 
-n_datapoints = 3000
+n_datapoints = 300
 input_scaler = MinMaxScaler()
 output_scaler = MinMaxScaler()
 
@@ -139,27 +138,57 @@ feature_names = ['A', 'B', 'C', 'D', 'E']
 
 test_input, test_output = test_data[:]
 test_input = np.asarray(test_input.numpy())
-test_output = np.asarray(test_output.numpy())
+test_output = test_output.numpy()
 
-model = sklearn.linear_model.LinearRegression()
-model.fit(test_input, test_output)
-
-print(model.coef_[0])
-
+#print(test_input[:,0].shape)
+#print(test_input[0,:].shape)
+#print(test_input.shape)
 
 
-# explainer = shap.KernelExplainer(true_model, test_input[:10, :])
-# shap_values = explainer.shap_values(test_input[0:10, :], nsamples=200)
-# #shap.force_plot(explainer.expected_value, shap_values, X_display.iloc[299, :])
+ale = ALE(true_model, feature_names)
 
-# print()
-# print()
-
-# print(shap_values)
-# print(test_input[0:10, :])
-# print(test_output[0:10])
+#print(test_input[0, 0])
 
 
-# print(np.divide(shap_values,test_input[0, :]))
+exp = ale.explain(test_input, min_bin_points=1)
 
-#print(np.multiply(shap_values,test_input[0, :]))
+#print(len(exp.ale_values))
+
+ex_D = exp.ale_values[3]
+ex_E = exp.ale_values[4]
+
+#print(exp.feature_values[3].shape)
+print(exp.ale0)
+
+#print(np.asarray(ex_D).shape())
+print(len(exp.feature_values[3]))
+
+ale0_d = exp.ale0[3].item()
+ale0_e = exp.ale0[4].item()
+
+print() 
+
+for (ex_d, d_val) in zip(ex_D, exp.feature_values[3]):
+
+    print(ex_d.item())
+    print(ale0_d)
+    print(d_val)
+    print((ex_d.item()/d_val))
+    print()
+
+
+
+print()
+print()
+print()
+
+# for (ex_e, e_val) in zip(ex_E, exp.feature_values[3]):
+
+#     print(ex_e.item() + ale0_e)
+#     print(e_val)
+#     print((ex_e.item() + ale0_e)/e_val)
+#     print()
+
+#print(ex_D/exp.feature_values[3])
+
+plot_ale(exp)
