@@ -25,8 +25,8 @@ C_D = False
 Independent = False
 Simplify = False
 
-Output_var = 'y1'
-#Output_var = 'y2'
+#Output_var = 'y1'
+Output_var = 'y2'
 
 n_datapoints = 3000
 input_scaler = MinMaxScaler()
@@ -144,22 +144,32 @@ test_output = np.asarray(test_output.numpy())
 model = sklearn.linear_model.LinearRegression()
 model.fit(test_input, test_output)
 
-print(model.coef_[0])
+# print(model.coef_[0])
 
 
 
-# explainer = shap.KernelExplainer(true_model, test_input[:10, :])
-# shap_values = explainer.shap_values(test_input[0:10, :], nsamples=200)
-# #shap.force_plot(explainer.expected_value, shap_values, X_display.iloc[299, :])
+explainer = shap.KernelExplainer(true_model, test_input[:10, :])
+shap_values = explainer.shap_values(test_input[0:10, :], nsamples=200)
+#shap.force_plot(explainer.expected_value, shap_values, X_display.iloc[299, :])
 
-# print()
-# print()
+print()
+print()
 
-# print(shap_values)
+print() 
+print("Shap values for ", Output_var)
+print(shap_values)
 # print(test_input[0:10, :])
 # print(test_output[0:10])
 
+# print(shap_values.shape)
+# print(test_input[0:10, :].shape)
 
-# print(np.divide(shap_values,test_input[0, :]))
+print() 
+print("Linear coefficients for ", Output_var)
+print(np.divide(shap_values,(test_input[:10, :]-np.mean(test_input[:10, :], axis = 0))))
 
 #print(np.multiply(shap_values,test_input[0, :]))
+
+#shap = coeff_i * (x_i - E[x_i])
+
+#coeff_i = shap/(x_i - E[x_i])

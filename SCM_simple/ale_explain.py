@@ -173,7 +173,7 @@ for (ex_d, d_val) in zip(ex_D, exp.feature_values[3]):
     print(ex_d.item())
     print(ale0_d)
     print(d_val)
-    print((ex_d.item()/d_val))
+    print((ex_d.item()/(d_val-ale0_d)))
     print()
 
 
@@ -192,3 +192,12 @@ print()
 #print(ex_D/exp.feature_values[3])
 
 plot_ale(exp)
+
+
+'''
+To get the linear coefficients from the ALE values, you can follow these steps:
+
+* Calculate the ALE values for each feature in your dataset using the ALE method.
+* For each feature, divide the ALE values by the range of the corresponding feature. This step ensures that the ALE values are scaled appropriately.
+* Take the mean of the scaled ALE values for each feature. These mean values will be your linear coefficients.
+'''
