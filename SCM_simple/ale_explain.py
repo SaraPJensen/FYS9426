@@ -150,7 +150,7 @@ ale = ALE(true_model, feature_names)
 #print(test_input[0, 0])
 
 
-exp = ale.explain(test_input, min_bin_points=1)
+exp = ale.explain(test_input, min_bin_points=4)
 
 #print(len(exp.ale_values))
 
@@ -158,23 +158,61 @@ ex_D = exp.ale_values[3]
 ex_E = exp.ale_values[4]
 
 #print(exp.feature_values[3].shape)
-print(exp.ale0)
+#print(exp.ale0)
 
 #print(np.asarray(ex_D).shape())
-print(len(exp.feature_values[3]))
+#print(len(exp.feature_values[3]))
 
 ale0_d = exp.ale0[3].item()
 ale0_e = exp.ale0[4].item()
 
 print() 
 
+ALE_values = np.array(exp.ale_values)
+
+print(ALE_values.squeeze().shape)
+
+print(ALE_values)
+
+
+ranges = np.ptp(ALE_values, axis=1)
+
+scaled_ale_means = []
+
+print(ranges)
+
+for feature_ale, feature_range in zip(ALE_values, ranges):
+    scaled_ale = feature_ale / feature_range
+    scaled_ale_mean = np.mean(scaled_ale)
+    scaled_ale_means.append(scaled_ale_mean)
+
+print("Mean of scaled ALE values for each feature:", scaled_ale_means)
+
+exit()
+scaled_ALE_values = np.divide(ALE_values, np.ptp(ALE_values, axis=1)) 
+#print(scaled_ALE_values)
+print(np.ptp(ALE_values, axis=1))
+input()
+
+# Step 3: Calculate the mean of the scaled ALE values for each feature
+linear_coefficients = np.mean(scaled_ALE_values, axis=0)
+
+print("Linear coefficients")
+print(linear_coefficients)
+print()
+
+
+exit()
+
 for (ex_d, d_val) in zip(ex_D, exp.feature_values[3]):
 
-    print(ex_d.item())
-    print(ale0_d)
-    print(d_val)
+    # print(ex_d.item())
+    # print(ale0_d)
+    # print(d_val)
     print((ex_d.item()/(d_val-ale0_d)))
-    print()
+
+
+    
 
 
 

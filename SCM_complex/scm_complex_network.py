@@ -120,8 +120,9 @@ class MyDataset(Dataset):
         inputs, _ = training_data[:]
         scaler_inputs.fit(inputs)
         self.scaler_inputs = scaler_inputs
-        self.inputs = torch.from_numpy(self.scaler_inputs.transform(self.inputs))  #scale all the input features in the dataset, both training and test, according to the training data
-        self.inputs = self.inputs.to(torch.float32)
+
+        # self.inputs = torch.from_numpy(self.scaler_inputs.transform(self.inputs))  #scale all the input features in the dataset, both training and test, according to the training data
+        # self.inputs = self.inputs.to(torch.float32)
 
         return self.scaler_inputs
 
@@ -278,6 +279,11 @@ if __name__ == "__main__":
     if Scaling:
         trained_scaler_inputs = torch_dataset.fit_scaling_inputs(input_scaler, train_data)
         trained_scaler_outputs = torch_dataset.fit_scaling_outputs(output_scaler, train_data)
+
+        #The input scaling must be done explicitly, the output scaling is automatic. 
+        train_data.scale_inputs(trained_scaler_inputs)
+        test_data.scale_inputs(trained_scaler_inputs)
+        val_data.scale_inputs(trained_scaler_inputs)
 
 
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle = True)

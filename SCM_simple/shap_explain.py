@@ -9,7 +9,8 @@ from torch.utils.data import Dataset
 import torch.nn.init as init
 from lime import lime_tabular
 from sklearn.preprocessing import MinMaxScaler
-from scm_simple_network import MyDataset
+from scm_simple_network import MyDataset, DeepModel, TestModel
+from torch.autograd import Variable
 
 import sklearn
 import shap
@@ -17,8 +18,8 @@ import shap
 torch.manual_seed(2)
 np.random.seed(2)
 
-Scaling = False
-Deep = True
+Scaling = True
+Deep = False
 
 Intervene = True 
 C_D = False
@@ -31,6 +32,35 @@ Output_var = 'y2'
 n_datapoints = 3000
 input_scaler = MinMaxScaler()
 output_scaler = MinMaxScaler()
+
+
+def get_model_name(Output_var, Deep, Scaling, Intervene, C_D, Independent, Simplify):
+
+    file_intv = ''
+    if Intervene:
+        if C_D:
+            file_intv = "Intv_C_D_"
+        else:
+            file_intv = "Intv_"
+
+    if Scaling:
+        filename = f"{Output_var}_{file_intv}MinMax_lr_0.001"
+    else:
+        filename = f"{Output_var}_{file_intv}Raw_data_lr_0.001"
+
+    if Independent:
+        filename = "indep_" + filename
+
+    if Simplify: 
+        filename = "simple_" + filename
+
+    if Deep:
+        filename = "deeeeep_" + filename
+
+    model_name = f"saved_models/{Output_var}/best_{filename}.pth"
+
+    return model_name
+
 
 if Intervene:
     if C_D:
@@ -60,12 +90,6 @@ if Scaling:
     trained_scaler_outputs = torch_dataset.fit_scaling_outputs(output_scaler, train_data)
 
 
-#train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle = True)
-#val_loader = torch.utils.data.DataLoader(val_data, batch_size = 1, shuffle = True)
-#test_loader = torch.utils.data.DataLoader(test_data, batch_size = 1, shuffle = True)
-
-
-
 ### Define an out-of-domain dataset
 n_ood = 500
 
@@ -81,7 +105,6 @@ output_tensor = torch.from_numpy(ood_targets).float()
 
 ood_torch_dataset = MyDataset(input_tensor, output_tensor, Output_var, Simplify) 
 if Scaling:
-    ood_torch_dataset.scale_inputs(trained_scaler_inputs)
     ood_torch_dataset.scale_outputs(trained_scaler_outputs)
 #ood_test_loader = torch.utils.data.DataLoader(ood_torch_dataset, batch_size = 1, shuffle = True)
 
@@ -97,7 +120,6 @@ output_tensor = torch.from_numpy(diff_mod_targets).float()
 
 diff_mod_torch_dataset = MyDataset(input_tensor, output_tensor, Output_var, Simplify) 
 if Scaling:
-    diff_mod_torch_dataset.scale_inputs(trained_scaler_inputs)
     diff_mod_torch_dataset.scale_outputs(trained_scaler_outputs)
 #diff_mod_loader = torch.utils.data.DataLoader(diff_mod_torch_dataset, batch_size = 1, shuffle = True)
 
@@ -113,9 +135,12 @@ output_tensor = torch.from_numpy(diff_rand_mod_targets).float()
 
 diff_mod_rand_torch_dataset = MyDataset(input_tensor, output_tensor, Output_var, Simplify) 
 if Scaling:
-    diff_mod_rand_torch_dataset.scale_inputs(trained_scaler_inputs)
     diff_mod_rand_torch_dataset.scale_outputs(trained_scaler_outputs)
 #diff_mod_rand_loader = torch.utils.data.DataLoader(diff_mod_rand_torch_dataset, batch_size = 1, shuffle = True)
+
+
+
+
 
 
 
@@ -141,32 +166,76 @@ test_input, test_output = test_data[:]
 test_input = np.asarray(test_input.numpy())
 test_output = np.asarray(test_output.numpy())
 
-model = sklearn.linear_model.LinearRegression()
-model.fit(test_input, test_output)
+# model = sklearn.linear_model.LinearRegression()
+# model.fit(test_input, test_output)
 
 # print(model.coef_[0])
 
 
+model_name = get_model_name(Output_var, Deep, Scaling, Intervene, C_D, Independent, Simplify)
+trained_model = torch.load(model_name)
+trained_model.eval()
 
-explainer = shap.KernelExplainer(true_model, test_input[:10, :])
-shap_values = explainer.shap_values(test_input[0:10, :], nsamples=200)
+
+
+f = lambda x: trained_model(torch.from_numpy(x)).detach().numpy()  #Wrap model to avoid problems with torch tensors and numpy arrays
+
+
+sample_size = 30
+
+def wrapping_func(x):
+    if Scaling: 
+        x = torch.from_numpy(trained_scaler_inputs.transform(x))
+        x = x.to(torch.float32)
+        pred = trained_model(x).detach().numpy()
+        rescaled_pred = trained_scaler_outputs.inverse_transform(pred)
+
+        return rescaled_pred
+    
+    else:
+        pred = trained_model(torch.from_numpy(x)).detach().numpy()
+
+        return pred
+
+
+
+
+explainer = shap.KernelExplainer(wrapping_func, test_input[:sample_size, :])
+shap_values = explainer.shap_values(test_input[0:sample_size, :], nsamples=200).squeeze()
 #shap.force_plot(explainer.expected_value, shap_values, X_display.iloc[299, :])
 
 print()
 print()
 
-print() 
-print("Shap values for ", Output_var)
-print(shap_values)
+# print() 
+# print("Shap values for ", Output_var)
+# print(shap_values)
 # print(test_input[0:10, :])
 # print(test_output[0:10])
 
-# print(shap_values.shape)
+
+print(shap_values.shape)
 # print(test_input[0:10, :].shape)
+
 
 print() 
 print("Linear coefficients for ", Output_var)
-print(np.divide(shap_values,(test_input[:10, :]-np.mean(test_input[:10, :], axis = 0))))
+
+coefficients = np.divide(shap_values,(test_input[:sample_size, :]-np.mean(test_input[:sample_size, :], axis = 0)))
+
+avg_coeff = np.mean(coefficients, axis = 0)
+variance = np.var(coefficients, axis = 0)
+std = np.std(coefficients, axis = 0)
+
+for c, v, s in zip(avg_coeff, variance, std): 
+    print(f"{round(c, 5)}, variance {round(v, 5)}, std {round(s, 5)}")
+
+
+
+
+#print(np.divide(shap_values,(test_input[:10, :]-np.mean(test_input[:10, :], axis = 0))))
+
+
 
 #print(np.multiply(shap_values,test_input[0, :]))
 
