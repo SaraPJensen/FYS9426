@@ -355,6 +355,7 @@ if __name__ == "__main__":
 
     if Test:
         exit()
+        
     #Define a dataset with interventional data, using a different seed from the training
     n_intv_testing = 500
     intv_inputs, intv_targets = scm_intv_dataset_gen(n_intv_testing, seed = 54321)

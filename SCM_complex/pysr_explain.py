@@ -4,11 +4,11 @@ import torch.nn as nn
 import numpy as np
 from scm_complex_dataset import scm_dataset_gen, scm_out_of_domain, scm_diff_seed, scm_diff_model, scm_diff_rand_model, scm_indep_ood, scm_normal_dist, scm_indep
 from scm_intv_complex_dataset import scm_intv_dataset_gen, scm_intv_ood, scm_intv_c_d_dataset_gen
+from filename_funcs import get_filename, get_model_name
 from torch.optim import Adam
 from tqdm import tqdm
 from torch.utils.data import Dataset
 import torch.nn.init as init
-from lime import lime_tabular
 from sklearn.preprocessing import MinMaxScaler
 from scm_complex_network import MyDataset, DeepModel, TestModel
 import os
@@ -16,6 +16,7 @@ import dill
 
 import sklearn
 import shap
+
 
 torch.manual_seed(2)
 np.random.seed(2)
@@ -30,6 +31,7 @@ Simplify = False
 
 #Output_var = 'y1'
 Output_var = 'y2'
+
 
 n_datapoints = 3000
 input_scaler = MinMaxScaler()
@@ -135,6 +137,14 @@ if Scaling:
 intv_test_loader = torch.utils.data.DataLoader(intv_torch_dataset, batch_size = 1, shuffle = True)
 
 
+
+filename = get_filename(Output_var, Deep, Scaling, Intervene, C_D, Independent, Simplify)
+save_path = f"pysr/{Output_var}/filename/"
+
+if not os.path.exists(save_path):
+    os.makedirs(save_path)
+
+print("test")
 
 def true_model(X):
     A = X[:,0]
