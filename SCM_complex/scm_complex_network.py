@@ -145,11 +145,16 @@ class MyDataset(Dataset):
         self.targets = torch.from_numpy(self.scaler_outputs.transform(self.targets.reshape(-1, 1)))
         self.targets = self.targets.to(torch.float32)
 
+    def rescale_inputs(self, inputs):
+        rescaled_inputs = torch.from_numpy(self.scaler_inputs.inverse_transform(inputs))
+
+        return rescaled_inputs
 
     def rescale_outputs(self, outputs):
         rescaled_outputs = torch.from_numpy(self.scaler_outputs.inverse_transform(outputs))
 
         return rescaled_outputs
+
     
     def __getitem__(self, index):
         x = self.inputs[index]

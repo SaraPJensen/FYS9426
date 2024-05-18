@@ -7,7 +7,6 @@ from torch.optim import Adam
 from tqdm import tqdm
 from torch.utils.data import Dataset
 import torch.nn.init as init
-from lime import lime_tabular
 from sklearn.preprocessing import MinMaxScaler
 from scm_complex_network import MyDataset, TestModel, DeepModel
 
