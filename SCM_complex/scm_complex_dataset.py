@@ -46,10 +46,22 @@ def datapoint_gen_diff_model(n_datapoints, a, b, e):
 
 
 
-#Generate 500 data-points and store them in numpy arrays
+def scm_dataset_gen_inclusive(n_datapoints, seed = 5):
+    np.random.seed(seed)
+    inputs = np.zeros((n_datapoints, 5))
+    outputs = np.zeros((n_datapoints, 2))
 
-#Input array: 500 x 5
-#Output array: [y1, y2] -> 500 x 2 
+    #Maximum range of regular and ood combined
+    A = np.random.uniform(-3, 5, size=n_datapoints)
+    B = np.random.uniform(0.5, 5.5, size=n_datapoints)
+    E = np.random.uniform(0, 8, size=n_datapoints)
+
+    C, D, y1, y2 = datapoint_gen(A, B, E)
+
+    inputs = np.column_stack((A, B, C, D, E))
+    outputs = np.column_stack((y1, y2))
+
+    return inputs, outputs 
 
 
 def scm_dataset_gen(n_datapoints, seed = 5):

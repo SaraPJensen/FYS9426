@@ -48,12 +48,6 @@ def datapoint_gen_diff_model(n_datapoints, a, b, e):
 
 
 
-#Generate 500 data-points and store them in numpy arrays
-
-#Input array: 500 x 5
-#Output array: [y1, y2] -> 500 x 2 
-
-
 def scm_dataset_gen(n_datapoints, seed = 5):
     np.random.seed(seed)
     inputs = np.zeros((n_datapoints, 5))
@@ -132,10 +126,6 @@ def scm_out_of_domain(n_out_of_domain, seed = 5):
     np.random.seed(seed)
     inputs = np.zeros((n_out_of_domain, 5))
     outputs = np.zeros((n_out_of_domain, 2))
-
-    # A = np.random.uniform(-3, 12, size=n_out_of_domain)  
-    # B = np.random.uniform(9, 22, size=n_out_of_domain)
-    # E = np.random.uniform(2, 8, size=n_out_of_domain)  
 
     A = np.random.uniform(-3, 12, size=n_out_of_domain)  
     B = np.random.uniform(13, 25, size=n_out_of_domain)

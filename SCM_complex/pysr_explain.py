@@ -5,14 +5,17 @@ import numpy as np
 from scm_complex_dataset import scm_dataset_gen, scm_out_of_domain, scm_diff_seed, scm_diff_model, scm_diff_rand_model, scm_indep_ood, scm_normal_dist, scm_indep
 from scm_intv_complex_dataset import scm_intv_dataset_gen, scm_intv_ood, scm_intv_c_d_dataset_gen
 from filename_funcs import get_filename, get_model_name
+from math import sqrt, exp, sin, cos
 from torch.optim import Adam
 from tqdm import tqdm
 from torch.utils.data import Dataset
 import torch.nn.init as init
 from sklearn.preprocessing import MinMaxScaler
 from scm_complex_network import MyDataset, DeepModel, TestModel
+import pandas as pd
 import os
 import dill
+import pickle
 
 import sklearn
 import shap
@@ -22,7 +25,7 @@ torch.manual_seed(2)
 np.random.seed(2)
 
 True_model = False
-Scaling = False
+Scaling = True
 Deep = True
 
 Intervene = True 
@@ -50,7 +53,7 @@ else:
     inputs, outputs = scm_dataset_gen(n_datapoints)
 
 
-batch_size = 32
+
 
 #Make torch dataset - this is just for scaling
 input_tensor = torch.from_numpy(inputs).float()
@@ -158,20 +161,6 @@ def true_model(X):
 
 
 
-def true_model(X):
-    A = X[:,0]
-    D = X[:, 3]
-    E = X[:, 4]
-
-    y1 = 3.5*A + 0.5*D
-    y2 = -2*D + 0.2*E
-
-    if Output_var == 'y1':
-        return y1
-    else: 
-        return y2
-
-
 filename = get_filename(Output_var, Deep, Scaling, Intervene, C_D, Independent, Simplify)
 model_name = get_model_name(Output_var, Deep, Scaling, Intervene, C_D, Independent, Simplify)
 trained_model = torch.load(model_name)
@@ -182,6 +171,7 @@ if True_model:
     trained_model = true_model
 
 save_path = f"pysr/{Output_var}/{filename}/"
+
 save_file = save_path + "best_funcs.csv"
 
 if not os.path.exists(save_path):
@@ -193,7 +183,7 @@ file.write("Dataset,expression\n")
 file.close()
 
 
-feature_names = ['a', 'b', 'c', 'd', 'e']
+feature_names = ['a', 'b', 'c', 'd', 'e']   #Global variable 
 
 
 # Generate dataset for the model predictions of each model. Must rescale both the inputs and the outputs before passing them to PySR
@@ -205,40 +195,48 @@ def fit_pysr(dataset_name, trained_model, dataloader, save_path, save_file, Scal
     pysr_inputs = torch.zeros_like(token_inputs)
     pysr_preds = torch.zeros_like(token_outputs)
 
+    #Generate dataset for PySR to train on 
     with torch.no_grad():
         for i, (inputs, _) in enumerate(dataloader):
             pred = trained_model(inputs)
+
             if Scaling:
                 inputs = obsv_torch_dataset.rescale_inputs(inputs)
-                preds = torch_dataset.rescale_outputs(pred)
+                pred = torch_dataset.rescale_outputs(pred)
 
-            
             pysr_inputs[i,:] = inputs
             pysr_preds[i,:] = pred
 
+
     model = PySRRegressor(
-        niterations=10,  # < Increase me for better results
+        niterations=50,  # < Increase me for better results
         binary_operators=["+", "-", "*", "/", "^"],
         unary_operators=[
             "cos",
             "exp",
             "sin",
-            "square",
-            "inv(x) = 1/x",
+            "sqrt"
         ],
-        constraints = {'^': (-1, 1)},
-        extra_sympy_mappings={"inv": lambda x: 1 / x},
+        constraints = {'^': (-1, 1)},   #Only allow enteger values of exponents 
         equation_file = f"{save_path}_{dataset_name}.csv",
+        tempdir = save_path,
+        temp_equation_file = True,
+        delete_tempfiles = True
     )
 
     model.fit(pysr_inputs.numpy(), pysr_preds.numpy(), variable_names = feature_names)
 
     best_eq = model.get_best().equation
 
-    #Now pass the dataset through the best equation to test the fit compared with the original dataset
-    file = open(save_file, "w")
+    file = open(save_file, "a")
     file.write(f"{dataset_name},{best_eq}\n")
     file.close()
+
+
+    with open(f"{save_path}/{dataset_name}.pkl", 'wb') as model_file:
+        pickle.dump(model, model_file)
+
+
 
 
 fit_pysr("obsv", trained_model, obsv_torch_loader, save_path, save_file, Scaling, token_inputs, token_outputs)
@@ -253,9 +251,9 @@ fit_pysr("diff_mod", trained_model, diff_mod_torch_loader, save_path, save_file,
 
 fit_pysr("diff_mod_rand", trained_model, diff_mod_rand_torch_loader, save_path, save_file, Scaling, token_inputs, token_outputs)
 
-exit()
 
 
+'''
 
 test_input, test_output = test_data[:]
 test_input = np.asarray(test_input.numpy())
@@ -281,9 +279,9 @@ model = PySRRegressor(
     constraints = {'^': (-1, 1)},
     extra_sympy_mappings={"inv": lambda x: 1 / x},
     equation_file = f"{save_path}eqs.csv",
-    # tempdir = "pysr/y1/temp",
-    # temp_equation_file = True,
-    # delete_tempfiles = False
+    tempdir = "pysr/y1/temp",
+    temp_equation_file = True,
+    delete_tempfiles = False
 )
 
 
@@ -315,5 +313,5 @@ save_symbol_file.close()
 
 
 
-
+'''
 
