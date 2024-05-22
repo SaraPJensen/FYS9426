@@ -28,13 +28,14 @@ True_model = False
 Scaling = True
 Deep = True
 
-Intervene = True 
+Intervene = False 
 C_D = False
-Independent = False
+Independent = True
+
 Simplify = False
 
-#Output_var = 'y1'
-Output_var = 'y2'
+Output_var = 'y1'
+#Output_var = 'y2'
 
 
 n_datapoints = 3000

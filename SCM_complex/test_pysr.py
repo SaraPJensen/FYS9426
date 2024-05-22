@@ -71,6 +71,7 @@ if Scaling:
 n_testing = 5
 
 inputs, targets = scm_dataset_gen_inclusive(n_testing, seed = 54321)
+
 input_tensor = torch.from_numpy(inputs).float()
 output_tensor = torch.from_numpy(targets).float()
 
@@ -146,7 +147,7 @@ torch_ml_loss = loss_torch(scaled_targets, ml_pred)
 
 unscaled_loss = loss_torch(unscaled_targets, rescaled_ml_pred)
 
-print("Torch ml loss, scaled: ", torch_ml_loss.item())
+#print("Torch ml loss, scaled: ", torch_ml_loss.item())
 print("Torch ml loss, unscaled: ", unscaled_loss.item())
 
 

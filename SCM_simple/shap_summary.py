@@ -17,11 +17,6 @@ def write_progress(source_file, save_filename, Output_var, Deep, Scaling, Intv, 
     save_file.write(f"{Deep},{Scale_type},{Intv},{C_D},{Independent},{avg_var}\n")  
     save_file.close()
 
-    # print({Deep},{Scale_type},{Intv},{C_D},{Independent},{avg_var})
-    # exit()
-        
-
-
 
 True_model = False
 

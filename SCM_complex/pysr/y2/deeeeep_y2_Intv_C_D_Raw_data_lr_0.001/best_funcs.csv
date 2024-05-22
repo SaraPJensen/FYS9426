@@ -1,0 +1,7 @@
+Dataset,expression
+obsv,((3.9983065 - d) * d) + sqrt(e)
+intv,sqrt(e) - (d * (d - 3.997559))
+ood,(-9.948899 - (exp(-0.77106225 + b) - cos(d))) - ((sin(d) * 1.7264042) - d)
+ood_intv,((cos(d) * exp(1.1511807)) + ((6.883234 - d) * (d ^ 1.045394))) + -19.52464
+diff_mod,((sqrt(e) - (d ^ 2.0765424)) - -7.827068) + (d ^ 1.7116822)
+diff_mod_rand,((3.9996483 - d) * d) + sqrt(e)
