@@ -23,10 +23,11 @@ Deep = False
 Intervene = False 
 C_D = False
 Independent = True
+
 Simplify = False
 
-Output_var = 'y1'
-#Output_var = 'y2'
+#Output_var = 'y1'
+Output_var = 'y2'
 
 n_datapoints = 3000
 input_scaler = MinMaxScaler()
@@ -174,12 +175,20 @@ def shap_explainer(dataset, sample_size, bg_data):
     inputs, _ = dataset[:]
     inputs = inputs.numpy()
 
-    subset = shap.utils.sample(inputs, nsamples = bg_data)
+    # print(inputs.shape)
+    # print(inputs[0].shape)
+    # print(inputs.shape[1])
+    # print(inputs.shape[0])
 
-    explainer = shap.KernelExplainer(wrapping_func, subset)
+    subset = inputs[np.random.randint(inputs.shape[0], size = bg_data)]
+    # print(subset.shape)
+    # print(np.mean(inputs, axis = 0))
+    # print(np.mean(subset, axis = 0))
+    # exit()
+    explainer = shap.KernelExplainer(wrapping_func, subset) #inputs[0:sample_size, :])
 
     shap_values = explainer.shap_values(inputs[0:sample_size, :]).squeeze()
-    coefficients = np.divide(shap_values,(inputs[:sample_size, :]-np.mean(subset, axis = 0)))
+    coefficients = np.divide(shap_values, (inputs[:sample_size, :]-np.mean(subset, axis = 0)))
     avg_coeff = np.mean(coefficients, axis = 0)
     variance = np.var(coefficients, axis = 0)
 
@@ -219,7 +228,6 @@ combined_coefficients = coefficients
 combined_avg = np.expand_dims(avg_coeff, axis=0)
 combined_variance = np.expand_dims(variance, axis=0)
 file = open(save_file, "a")
-avg_coeff, variance, coefficients = shap_explainer(dataset, sample_size)
 file.write(f"obsv,{avg_coeff[0]},{variance[0]},{avg_coeff[1]},{variance[1]},{avg_coeff[2]},{variance[2]},{avg_coeff[3]},{variance[3]},{avg_coeff[4]},{variance[4]},{np.mean(variance)}\n")
 file.close()      
 

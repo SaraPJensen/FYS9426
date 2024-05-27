@@ -11,7 +11,11 @@ def write_progress(source_file, save_filename, Output_var, Deep, Scaling, Intv, 
         Scale_type = "Raw_data"
 
     df = pd.read_csv(f"{source_file}")
-    avg_var = df.iat[-1,1] #.values
+    #avg_var = df["Average_total_variance"]
+    avg_var = df.iat[-1,1]
+    print(avg_var)
+
+    #df.iat[-1,1] #.values
 
     save_file = open(save_filename, "a")
     save_file.write(f"{Deep},{Scale_type},{Intv},{C_D},{Independent},{avg_var}\n")  
@@ -28,8 +32,8 @@ C_D = False
 Independent = False
 Simplify = False
 
-Output_var = 'y1'
-#Output_var = 'y2'
+#Output_var = 'y1'
+Output_var = 'y2'
 
 
 

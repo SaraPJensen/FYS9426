@@ -1,0 +1,17 @@
+Deep,Scaling,Intv,C_D,Independent,Avg_variance
+False,Raw_data,False,False,False,0.0287346158718473
+False,Raw_data,True,False,False,0.0007485032279493
+False,Raw_data,True,True,False,0.0010032487178196
+False,Raw_data,False,False,True,0.000107550230511
+False,MinMax,False,False,False,0.5511197165107145
+False,MinMax,True,False,False,0.0450517983501331
+False,MinMax,True,True,False,0.0696905595174769
+False,MinMax,False,False,True,0.075438293046358
+True,Raw_data,False,False,False,0.1042781437418042
+True,Raw_data,True,False,False,0.0006274417205941
+True,Raw_data,True,True,False,0.0003018616167537
+True,Raw_data,False,False,True,2.961146167844746e-05
+True,MinMax,False,False,False,0.492577187879985
+True,MinMax,True,False,False,0.561957984062617
+True,MinMax,True,True,False,0.3723964892345752
+True,MinMax,False,False,True,0.4619053151655433
