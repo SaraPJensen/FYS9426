@@ -17,10 +17,11 @@ import pandas as pd
 np.random.seed(2)
 
 
-Output_var = 'y1'
-#Output_var = 'y2'
+#Output_var = 'y1'
+Output_var = 'y2'
 
 n_testing = 500
+no_ood = False
 
 Simplify = False
 eq_path = f"pysr/{Output_var}/true_model/" 
@@ -33,13 +34,16 @@ unscaled_inputs, unscaled_targets = torch_dataset[:]
 
 
 datasets = ["obsv", "intv", "ood", "ood_intv", "diff_mod", "diff_mod_rand"]
-
-
-all_preds = np.zeros((len(datasets), n_testing))
-
 model_save_filename = f"pysr/{Output_var}/true_model/summary.csv"
+
+if no_ood:
+    datasets = ["obsv", "intv", "diff_mod", "diff_mod_rand"]
+    model_save_filename = f"pysr/{Output_var}/true_model/summary_no_ood.csv"
+
 model_save_file = open(model_save_filename, "w")
 model_save_file.write("Input_data,loss,variance\n") 
+
+all_preds = np.zeros((len(datasets), n_testing))
 
 nan_idx_list = []
 

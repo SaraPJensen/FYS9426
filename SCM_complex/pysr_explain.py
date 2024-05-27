@@ -34,8 +34,8 @@ Independent = False
 
 Simplify = False
 
-Output_var = 'y1'
-#Output_var = 'y2'
+#Output_var = 'y1'
+Output_var = 'y2'
 
 
 n_datapoints = 3000
