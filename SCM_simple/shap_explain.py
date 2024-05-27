@@ -4,16 +4,12 @@ import numpy as np
 from scm_simple_dataset import scm_dataset_gen, scm_out_of_domain, scm_diff_seed, scm_diff_model, scm_diff_rand_model, scm_indep_ood, scm_normal_dist, scm_indep
 from scm_intv_simple_dataset import scm_intv_dataset_gen, scm_intv_ood, scm_intv_c_d_dataset_gen
 from filename_funcs import get_filename, get_model_name
-from torch.optim import Adam
 from tqdm import tqdm
 from torch.utils.data import Dataset
 import torch.nn.init as init
-from lime import lime_tabular
 from sklearn.preprocessing import MinMaxScaler
 from scm_simple_network import MyDataset, DeepModel, TestModel
-from torch.autograd import Variable
 
-import sklearn
 import shap
 
 torch.manual_seed(2)
@@ -21,16 +17,16 @@ np.random.seed(2)
 
 True_model = False
 
-Scaling = False
-Deep = True
+Scaling = True
+Deep = False
 
 Intervene = False 
 C_D = False
 Independent = True
 Simplify = False
 
-#Output_var = 'y1'
-Output_var = 'y2'
+Output_var = 'y1'
+#Output_var = 'y2'
 
 n_datapoints = 3000
 input_scaler = MinMaxScaler()
@@ -174,17 +170,16 @@ def wrapping_func(x):
         return pred
 
 
-def shap_explainer(dataset, sample_size, n_samples):
+def shap_explainer(dataset, sample_size, bg_data):
     inputs, _ = dataset[:]
     inputs = inputs.numpy()
-    # print(inputs.type())
-    # print(inputs.shape)
-    # exit()
 
-    explainer = shap.KernelExplainer(wrapping_func, inputs[:sample_size, :])
-    shap_values = explainer.shap_values(inputs[0:sample_size, :], nsamples=n_samples).squeeze()
-    coefficients = np.divide(shap_values,(inputs[:sample_size, :]-np.mean(inputs[:sample_size, :], axis = 0)))
+    subset = shap.utils.sample(inputs, nsamples = bg_data)
 
+    explainer = shap.KernelExplainer(wrapping_func, subset)
+
+    shap_values = explainer.shap_values(inputs[0:sample_size, :]).squeeze()
+    coefficients = np.divide(shap_values,(inputs[:sample_size, :]-np.mean(subset, axis = 0)))
     avg_coeff = np.mean(coefficients, axis = 0)
     variance = np.var(coefficients, axis = 0)
 
@@ -193,8 +188,8 @@ def shap_explainer(dataset, sample_size, n_samples):
 
 #Datasets available: obsv_torch_dataset, intv_torch_dataset, ood_torch_dataset, ood_intv_torch_dataset, diff_mod_torch_dataset, diff_mod_rand_torch_dataset
 
-sample_size = 100
-n_samples = 300
+sample_size = 500
+bg_data = 100
 
 
 model_name = get_model_name(Output_var, Deep, Scaling, Intervene, C_D, Independent, Simplify)
@@ -219,18 +214,18 @@ file.close()
 
 
 dataset = obsv_torch_dataset 
-avg_coeff, variance, coefficients = shap_explainer(dataset, sample_size, n_samples)
+avg_coeff, variance, coefficients = shap_explainer(dataset, sample_size, bg_data)
 combined_coefficients = coefficients
 combined_avg = np.expand_dims(avg_coeff, axis=0)
 combined_variance = np.expand_dims(variance, axis=0)
 file = open(save_file, "a")
-avg_coeff, variance, coefficients = shap_explainer(dataset, sample_size, n_samples)
+avg_coeff, variance, coefficients = shap_explainer(dataset, sample_size)
 file.write(f"obsv,{avg_coeff[0]},{variance[0]},{avg_coeff[1]},{variance[1]},{avg_coeff[2]},{variance[2]},{avg_coeff[3]},{variance[3]},{avg_coeff[4]},{variance[4]},{np.mean(variance)}\n")
 file.close()      
 
 
 dataset = intv_torch_dataset 
-avg_coeff, variance, coefficients = shap_explainer(dataset, sample_size, n_samples)
+avg_coeff, variance, coefficients = shap_explainer(dataset, sample_size, bg_data)
 combined_coefficients = np.append(combined_coefficients, coefficients, axis = 0)
 combined_avg = np.append(combined_avg, np.expand_dims(avg_coeff, axis=0), axis = 0)
 combined_variance = np.append(combined_variance, np.expand_dims(variance, axis=0), axis = 0)
@@ -241,7 +236,7 @@ file.close()
 
 
 dataset = ood_torch_dataset 
-avg_coeff, variance, coefficients = shap_explainer(dataset, sample_size, n_samples)
+avg_coeff, variance, coefficients = shap_explainer(dataset, sample_size, bg_data)
 combined_coefficients = np.append(combined_coefficients, coefficients, axis = 0)
 combined_avg = np.append(combined_avg, np.expand_dims(avg_coeff, axis=0), axis = 0)
 combined_variance = np.append(combined_variance, np.expand_dims(variance, axis=0), axis = 0)
@@ -250,7 +245,7 @@ file.write(f"ood_obsv,{avg_coeff[0]},{variance[0]},{avg_coeff[1]},{variance[1]},
 file.close()     
 
 dataset = ood_intv_torch_dataset 
-avg_coeff, variance, coefficients = shap_explainer(dataset, sample_size, n_samples)
+avg_coeff, variance, coefficients = shap_explainer(dataset, sample_size, bg_data)
 combined_coefficients = np.append(combined_coefficients, coefficients, axis = 0)
 combined_avg = np.append(combined_avg, np.expand_dims(avg_coeff, axis=0), axis = 0)
 combined_variance = np.append(combined_variance, np.expand_dims(variance, axis=0), axis = 0)
@@ -259,7 +254,7 @@ file.write(f"ood_intv,{avg_coeff[0]},{variance[0]},{avg_coeff[1]},{variance[1]},
 file.close()     
 
 dataset = diff_mod_torch_dataset 
-avg_coeff, variance, coefficients = shap_explainer(dataset, sample_size, n_samples)
+avg_coeff, variance, coefficients = shap_explainer(dataset, sample_size, bg_data)
 combined_coefficients = np.append(combined_coefficients, coefficients, axis = 0)
 combined_avg = np.append(combined_avg, np.expand_dims(avg_coeff, axis=0), axis = 0)
 combined_variance = np.append(combined_variance, np.expand_dims(variance, axis=0), axis = 0)
@@ -268,7 +263,7 @@ file.write(f"diff_mod,{avg_coeff[0]},{variance[0]},{avg_coeff[1]},{variance[1]},
 file.close()     
 
 dataset = diff_mod_rand_torch_dataset 
-avg_coeff, variance, coefficients = shap_explainer(dataset, sample_size, n_samples)
+avg_coeff, variance, coefficients = shap_explainer(dataset, sample_size, bg_data)
 combined_coefficients = np.append(combined_coefficients, coefficients, axis = 0)
 combined_avg = np.append(combined_avg, np.expand_dims(avg_coeff, axis=0), axis = 0)
 combined_variance = np.append(combined_variance, np.expand_dims(variance, axis=0), axis = 0)

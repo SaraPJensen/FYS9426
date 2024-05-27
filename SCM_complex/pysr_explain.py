@@ -218,7 +218,7 @@ def fit_pysr(dataset_name, trained_model, dataloader, save_path, save_file, Scal
             "sin",
             "sqrt"
         ],
-        constraints = {'^': (-1, 1)},   #Only allow enteger values of exponents 
+        constraints = {'^': (-1, 1)},   #Only allow integer values of exponents 
         equation_file = f"{save_path}_{dataset_name}.csv",
         tempdir = save_path,
         temp_equation_file = True,
