@@ -33,8 +33,6 @@ def pysr_summary(datasets, eq_path, unscaled_inputs, unscaled_targets, n_testing
 
         retrieved_mod = PySRRegressor.from_file(model_file)
 
-        # print(retrieved_mod.get_best().equation)
-
         preds = retrieved_mod.predict(unscaled_inputs.numpy())
         # print(preds)
 
@@ -62,23 +60,11 @@ def pysr_summary(datasets, eq_path, unscaled_inputs, unscaled_targets, n_testing
 
         all_preds = np.delete(all_preds, nan_idx_list, axis = 1)
 
-    #print(all_preds)
-    variance = np.var(all_preds, axis = 0)
-    #print(variance)
 
-    # print(variance.shape)
-    # print(variance)
-    # print(all_losses)
-    # print()
+    variance = np.var(all_preds, axis = 0)
 
     avg_variance = np.mean(variance) 
     avg_loss = np.mean(all_losses)
-    #print(avg_variance)
-
-    # print(avg_variance)
-    # print(avg_loss)
-    #exit()
-
 
     if Scaling: 
         Scale_type = "MinMax"

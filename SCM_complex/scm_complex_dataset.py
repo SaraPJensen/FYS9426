@@ -17,8 +17,8 @@ def datapoint_gen(a, b, e):
 
 def datapoint_gen_diff_rand_model(n_datapoints, a, b, e):
 
-    c = np.random.uniform(-9.78, 19.6, size=n_datapoints)  #[-9.8, 19.6]
-    d = np.random.uniform(6, 11, size=n_datapoints)   #[6, 11]
+    c = np.random.uniform(-9.78, 19.6, size=n_datapoints)  
+    d = np.random.uniform(6, 11, size=n_datapoints)   
 
     y1 = 3*a**2 + d**3 + a*d - d**2
     y2 = - d**2 + 4*d + np.sqrt(e)
@@ -30,7 +30,6 @@ def datapoint_gen_diff_model(n_datapoints, a, b, e):
 
     d = 0.8*b + 0.5*a
     c = 3*a + 0.8*d
-    #For now, C [-3, 14], D [0.6, 5.2], should be [-9.8, 19.6] and [6, 11]
 
     #Ensure that they are within the same range as the training data, to exclude this as a source of error
     C_scaler = MinMaxScaler(feature_range=(-9.77, 19.59))

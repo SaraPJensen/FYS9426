@@ -24,13 +24,13 @@ import shap
 torch.manual_seed(2)
 np.random.seed(2)
 
-True_model = False
-Scaling = True
-Deep = True
+True_model = True
+Scaling = False
+Deep = False
 
 Intervene = False 
 C_D = False
-Independent = True
+Independent = False
 
 Simplify = False
 
@@ -152,8 +152,8 @@ def true_model(X):
     D = X[:, 3]
     E = X[:, 4]
 
-    y1 = 3.5*A + 0.5*D
-    y2 = -2*D + 0.2*E
+    y1 = 3*A**2 + D**3 + A*D - D**2
+    y2 = - D**2 + 4*D + np.sqrt(E)
 
     if Output_var == 'y1':
         return y1
@@ -198,7 +198,7 @@ def fit_pysr(dataset_name, trained_model, dataloader, save_path, save_file, Scal
 
     #Generate dataset for PySR to train on 
     with torch.no_grad():
-        for i, (inputs, _) in enumerate(dataloader):
+        for i, (inputs, outputs) in enumerate(dataloader):
             pred = trained_model(inputs)
 
             if Scaling:
