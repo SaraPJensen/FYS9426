@@ -10,8 +10,8 @@ Scaling = False
 Deep = True
 
 
-Output_var = 'y1'
-#Output_var = 'y2'
+#Output_var = 'y1'
+Output_var = 'y2'
 
 if Scaling: 
     tit_scale = "min-max scaling"
@@ -26,7 +26,12 @@ else:
 
 models = ["Obsv", "Intv", "C_D", "Indp", "Simple"]
 results = []
-pasta_types = [pasta.ruote, pasta.maccheroni, pasta.gnocchi, pasta.farfalle, pasta.ravioli]
+
+if Output_var == 'y1':
+    pasta_types = [pasta.soli, pasta.pipe, pasta.gramigna, pasta.fiori, pasta.radiatori]
+else:
+    pasta_types = [pasta.tagliatelle, pasta.penne, pasta.farfalline, pasta.spighe, pasta.conchiglie]
+
 
 colours = ["firebrick", "goldenrod", "forestgreen", "lightseagreen", "steelblue"]
 columns = ["test_loss", "obsv_test_loss", "intv_test_loss", "out_of_domain_loss",  "diff_model_loss", "diff_mod_rand_loss"]
@@ -107,7 +112,7 @@ for y_vals, model_label, pasta_type, colour in zip(results, models, pasta_types,
             label = model_label, 
             marker = pasta_type, 
             color = colour,
-            markersize = 17, 
+            markersize = 18, 
             linestyle = '') 
 
 plt.legend(title="ML model", fancybox=True, title_fontsize = 14, fontsize = 13)

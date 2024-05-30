@@ -7,8 +7,8 @@ from matplotlib import rc
 
 
 
-#Output_var = 'y1'
-Output_var = 'y2'
+Output_var = 'y1'
+#Output_var = 'y2'
 
 no_ood = False
 
@@ -66,9 +66,10 @@ networks = ["Shallow, raw data", "Shallow, min-max", "Deep, raw data", "Deep, mi
 datasets = ["Obsv", "Intv", "C_D", "Indp"]
 
 
-
-#pasta_types = [pasta.creste, pasta.tortellini, pasta.cavatappi, pasta.rigatoni, pasta.spaghetti]
-pasta_types = [pasta.ruote, pasta.maccheroni, pasta.gnocchi, pasta.farfalle, pasta.ravioli]
+if Output_var == 'y1':
+    pasta_types = [pasta.ruote, pasta.maccheroni, pasta.gnocchi, pasta.farfalle, pasta.ravioli]
+else:
+    pasta_types = [pasta.creste, pasta.tortellini, pasta.cavatappi, pasta.rigatoni, pasta.stelline]
 
 
 colours = ["firebrick", "goldenrod", "forestgreen", "lightseagreen", "steelblue"]
@@ -81,7 +82,7 @@ for y_vals, model_label, pasta_type, colour in zip(results, datasets, pasta_type
             label = model_label, 
             marker = pasta_type, 
             color = colour,
-            markersize = 19, 
+            markersize = 20, 
             linestyle = '') 
 
 #plt.ylim(np.min(np.log(results))-0.5, 7)

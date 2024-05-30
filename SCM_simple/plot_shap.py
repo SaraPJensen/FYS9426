@@ -7,11 +7,11 @@ from matplotlib import rc
 
 
 
-#Output_var = 'y1'
-Output_var = 'y2'
+Output_var = 'y1'
+#Output_var = 'y2'
 
-Variance = False
-Exp_loss = True
+Variance = True
+Exp_loss = False
 Model_loss = False
 
 if Variance:
@@ -30,8 +30,11 @@ networks = ["Shallow, raw data", "Shallow, min-max", "Deep, raw data", "Deep, mi
 datasets = ["Obsv", "Intv", "C_D", "Indp"]
 
 
-#pasta_types = [pasta.creste, pasta.tortellini, pasta.cavatappi, pasta.rigatoni, pasta.spaghetti]
-pasta_types = [pasta.ruote, pasta.maccheroni, pasta.gnocchi, pasta.farfalle, pasta.ravioli]
+if Output_var == 'y1':
+    pasta_types = [pasta.soli, pasta.pipe, pasta.gramigna, pasta.fiori, pasta.radiatori]
+else:
+    pasta_types = [pasta.tagliatelle, pasta.penne, pasta.farfalline, pasta.spighe, pasta.conchiglie]
+
 
 colours = ["firebrick", "goldenrod", "forestgreen", "lightseagreen", "steelblue"]
 
@@ -41,18 +44,6 @@ filename = f"shap/{Output_var}/{Output_var}_summary.csv"
 
 df = pd.read_csv(filename)
 
-
-# if Variance:
-#     variances = df["Avg_variance"].to_list()
-#     results = [variances[i:i+4] for i in range(0, len(variances), 4)]   
-
-# elif Exp_loss:
-#     exp_loss = df["Avg_exp_loss"].to_list()
-#     results = [exp_loss[i:i+4] for i in range(0, len(exp_loss), 4)]  
-
-# else:
-#     model_loss = df["Avg_model_loss"].to_list()
-#     results = [model_loss[i:i+4] for i in range(0, len(model_loss), 4)]  
 
 if Variance:
     variances = df["Avg_variance"].to_list()
@@ -83,7 +74,7 @@ for y_vals, model_label, pasta_type, colour in zip(results, datasets, pasta_type
             label = model_label, 
             marker = pasta_type, 
             color = colour,
-            markersize = 19, 
+            markersize = 20, 
             linestyle = '') 
 
 plt.legend(title="ML model", fancybox=True, title_fontsize = 13, fontsize = 11)

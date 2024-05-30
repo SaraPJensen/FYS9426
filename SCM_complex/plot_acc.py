@@ -27,7 +27,12 @@ else:
 
 models = ["Obsv", "Intv", "C_D", "Indp", "Simple"]
 results = []
-pasta_types = [pasta.ruote, pasta.maccheroni, pasta.gnocchi, pasta.farfalle, pasta.ravioli]
+
+if Output_var == 'y1':
+    pasta_types = [pasta.ruote, pasta.maccheroni, pasta.gnocchi, pasta.farfalle, pasta.ravioli]
+else:
+    pasta_types = [pasta.creste, pasta.tortellini, pasta.cavatappi, pasta.rigatoni, pasta.stelline]
+
 
 colours = ["firebrick", "goldenrod", "forestgreen", "lightseagreen", "steelblue"]
 columns = ["test_loss", "obsv_test_loss", "intv_test_loss", "out_of_domain_loss",  "diff_model_loss", "diff_mod_rand_loss"]
@@ -108,7 +113,7 @@ for y_vals, model_label, pasta_type, colour in zip(results, models, pasta_types,
             label = model_label, 
             marker = pasta_type, 
             color = colour,
-            markersize = 17, 
+            markersize = 18, 
             linestyle = '') 
 
 plt.legend(title="ML model", fancybox=True, title_fontsize = 14, fontsize = 13)
@@ -119,7 +124,7 @@ plt.ylabel("Avg. MSE loss, logarithmic", fontsize=16)
 plt.xlabel("Test dataset", fontsize=16)
 plt.tight_layout()
 
-print("Saving figure")
+
 plt.savefig(f"figures/loss_{Output_var}_{tit_scale}_{tit_depth}.png", dpi = 300)
 #plt.show()
 
