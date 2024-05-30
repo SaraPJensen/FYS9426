@@ -3,7 +3,7 @@ from scipy.stats import truncnorm
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots(1, 1)
 from sklearn.preprocessing import MinMaxScaler
-
+from scm_intv_complex_dataset import scm_intv_dataset_gen, scm_intv_ood
 
 
 def datapoint_gen(a, b, e):
@@ -13,6 +13,37 @@ def datapoint_gen(a, b, e):
     y2 = - d**2 + 4*d + np.sqrt(e)
 
     return c, d, y1, y2
+
+
+
+def mixed_dataset_gen(n_datapoints, Output_var, seed = 5):
+    if Output_var == 'y1':
+        n_points = n_datapoints//5
+
+        obsv_inputs, obsv_targets = scm_dataset_gen(n_points, seed)
+        intv_inputs, intv_targets = scm_intv_dataset_gen(n_points, seed)
+        ood_inputs, ood_targets = scm_out_of_domain(n_points, seed)
+        diff_mod_inputs, diff_mod_targets = scm_diff_model(n_points, seed)
+        diff_rand_mod_inputs, diff_rand_mod_targets = scm_diff_rand_model(n_points, seed)
+
+        inputs = np.row_stack((obsv_inputs, intv_inputs, ood_inputs, diff_mod_inputs, diff_rand_mod_inputs))
+        outputs = np.row_stack((obsv_targets, intv_targets, ood_targets, diff_mod_targets, diff_rand_mod_targets))
+
+    else: 
+        n_points = n_datapoints//6
+
+        obsv_inputs, obsv_targets = scm_dataset_gen(n_points, seed)
+        intv_inputs, intv_targets = scm_intv_dataset_gen(n_points, seed)
+        ood_inputs, ood_targets = scm_out_of_domain(n_points, seed)
+        ood_intv_inputs, ood_intv_targets = scm_intv_ood(n_points, 15)
+        diff_mod_inputs, diff_mod_targets = scm_diff_model(n_points, seed)
+        diff_rand_mod_inputs, diff_rand_mod_targets = scm_diff_rand_model(n_points, seed)
+
+        inputs = np.row_stack((obsv_inputs, intv_inputs, ood_inputs, ood_intv_inputs, diff_mod_inputs, diff_rand_mod_inputs))
+        outputs = np.row_stack((obsv_targets, intv_targets, ood_targets, ood_intv_targets, diff_mod_targets, diff_rand_mod_targets))
+
+
+    return inputs, outputs
 
 
 def datapoint_gen_diff_rand_model(n_datapoints, a, b, e):

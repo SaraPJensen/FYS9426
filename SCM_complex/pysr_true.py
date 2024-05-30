@@ -2,7 +2,7 @@ from pysr import PySRRegressor
 import torch
 import torch.nn as nn
 import numpy as np
-from scm_complex_dataset import scm_dataset_gen_inclusive, scm_dataset_gen, scm_out_of_domain, scm_diff_seed, scm_diff_model, scm_diff_rand_model, scm_indep_ood, scm_normal_dist, scm_indep
+from scm_complex_dataset import mixed_dataset_gen
 from scm_intv_complex_dataset import scm_intv_dataset_gen, scm_intv_ood, scm_intv_c_d_dataset_gen
 from filename_funcs import get_filename, get_model_name
 from math import sqrt, exp, sin, cos
@@ -20,13 +20,13 @@ np.random.seed(2)
 #Output_var = 'y1'
 Output_var = 'y2'
 
-n_testing = 500
+n_testing = 600
 no_ood = False
 
 Simplify = False
 eq_path = f"pysr/{Output_var}/true_model/" 
 
-inputs, targets = scm_dataset_gen_inclusive(n_testing, seed = 54321)
+inputs, targets = mixed_dataset_gen(n_testing, Output_var, seed = 54321)
 input_tensor = torch.from_numpy(inputs).float()
 output_tensor = torch.from_numpy(targets).float()
 torch_dataset = MyDataset(input_tensor, output_tensor, Output_var, Simplify) 
@@ -46,6 +46,7 @@ model_save_file.write("Input_data,loss,variance\n")
 all_preds = np.zeros((len(datasets), n_testing))
 
 nan_idx_list = []
+all_losses = []
 
 for count, data in enumerate(datasets):
     model_file = eq_path + data + ".pkl"
@@ -67,8 +68,10 @@ for count, data in enumerate(datasets):
     else: 
         loss = sklearn.metrics.mean_squared_error(unscaled_targets.numpy(), preds)
 
+    all_losses.append(loss)
     model_save_file.write(f"{data},{loss}\n") 
 
 variance = np.var(all_preds, axis = 0)
 avg_variance = np.mean(variance)
-model_save_file.write(f",,{avg_variance}\n") 
+avg_loss = np.mean(all_losses)
+model_save_file.write(f"Average,{avg_variance},{avg_loss}\n") 

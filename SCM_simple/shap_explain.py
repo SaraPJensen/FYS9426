@@ -279,12 +279,14 @@ file = open(save_file, "a")
 file.write(f"rand_mod,{avg_coeff[0]},{variance[0]},{avg_coeff[1]},{variance[1]},{avg_coeff[2]},{variance[2]},{avg_coeff[3]},{variance[3]},{avg_coeff[4]},{variance[4]},{np.mean(variance)}\n")
 file.close()     
 
+
 avg_coeff = np.mean(combined_coefficients, axis = 0)
 variance = np.var(combined_coefficients, axis = 0)
 
 file = open(save_file, "a")
 file.write(f"Total,{avg_coeff[0]},{variance[0]},{avg_coeff[1]},{variance[1]},{avg_coeff[2]},{variance[2]},{avg_coeff[3]},{variance[3]},{avg_coeff[4]},{variance[4]},{np.mean(variance)}\n")
 file.close()     
+
 
 avg_combined_avg = np.mean(combined_avg, axis = 0)
 #avg_combined_variance = np.mean(combined_variance, axis = 0)
