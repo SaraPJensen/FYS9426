@@ -2,7 +2,7 @@ from pysr import PySRRegressor
 import torch
 import torch.nn as nn
 import numpy as np
-from scm_complex_dataset import mixed_dataset_gen
+from scm_complex_dataset import mixed_dataset_gen, mixed_dataset_gen_no_ood
 from filename_funcs import get_filename, get_model_name
 from math import sqrt, exp, sin, cos
 from tqdm import tqdm
@@ -36,19 +36,6 @@ def pysr_summary(datasets, eq_path, unscaled_inputs, unscaled_targets, n_testing
         pred = retrieved_mod.predict(unscaled_inputs.numpy())
         all_preds[d_set] = pred
 
-
-        # for d_point, input in enumerate(unscaled_inputs.numpy()):
-        #     with warnings.catch_warnings():
-        #         warnings.filterwarnings('error', category=RuntimeWarning)
-
-        #         try:  #Sometimes gets RuntimeWarning is it ends up taking the power of a negative number. Exclude these points
-        #             pred = retrieved_mod.predict(input.reshape(1, -1)).item()  #It doesn't expect individual datapoints, so have to reshape
-
-        #         except RuntimeWarning:
-        #             pred = np.nan
-
-        #     all_preds[d_set][d_point] = pred
-            
 
         if np.isnan(all_preds[d_set]).sum() > 0:  #Turns out some of the elements in the predictions are NaN. Remove these from the datasets
             nan_idx = np.sort(np.where(np.isnan(all_preds[d_set])))
@@ -88,6 +75,7 @@ def pysr_summary(datasets, eq_path, unscaled_inputs, unscaled_targets, n_testing
     for c in columns: 
         loss = df[c].iat[-1]
         losses.append(loss)
+    print(losses)
     avg_model_loss = np.mean(losses)
 
 
@@ -110,19 +98,21 @@ Simplify = False
 Output_var = 'y1'
 #Output_var = 'y2'
 
-no_ood = False
+no_ood = True
 
 #Define a dataset with observational data with an extended range
 n_testing = 600
 
 inputs, targets = mixed_dataset_gen(n_testing, Output_var, seed = 54321)
+
+if no_ood: 
+    inputs, targets = mixed_dataset_gen_no_ood(n_testing, seed = 54321)
+
 input_tensor = torch.from_numpy(inputs).float()
 output_tensor = torch.from_numpy(targets).float()
 torch_dataset = MyDataset(input_tensor, output_tensor, Output_var, Simplify) 
 unscaled_inputs, unscaled_targets = torch_dataset[:]
 
-
-datasets = ["obsv", "intv", "ood", "ood_intv", "diff_mod", "diff_mod_rand"]
 
 
 if no_ood:
@@ -131,6 +121,7 @@ if no_ood:
     columns = ["test_loss", "obsv_test_loss", "intv_test_loss", "diff_model_loss", "diff_mod_rand_loss"]
 
 else:
+    datasets = ["obsv", "intv", "ood", "ood_intv", "diff_mod", "diff_mod_rand"]
     summary_filename = f"pysr/{Output_var}/{Output_var}_summary.csv"
     columns = ["test_loss", "obsv_test_loss", "intv_test_loss", "out_of_domain_loss",  "diff_model_loss", "diff_mod_rand_loss"]
 
@@ -138,6 +129,7 @@ else:
 summary_file = open(summary_filename, "w")
 summary_file.write("Deep,Scaling,Intv,C_D,Independent,Avg_variance,Avg_exp_loss,Avg_model_loss\n")
 summary_file.close()
+
 
 
 

@@ -46,7 +46,7 @@ df = pd.read_csv(filename)
 
 
 if Variance:
-    variances = df["Avg_variance"].to_list()
+    variances = df["Avg_coeff_variance"].to_list()
     results = []
     for i in range(0, 4):
         results.append([variances[p+i] for p in range(0, len(variances), 4)])

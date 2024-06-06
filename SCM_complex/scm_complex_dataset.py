@@ -46,6 +46,20 @@ def mixed_dataset_gen(n_datapoints, Output_var, seed = 5):
     return inputs, outputs
 
 
+def mixed_dataset_gen_no_ood(n_datapoints, seed = 5):
+    n_points = n_datapoints//4
+
+    obsv_inputs, obsv_targets = scm_dataset_gen(n_points, seed)
+    intv_inputs, intv_targets = scm_intv_dataset_gen(n_points, seed)
+    diff_mod_inputs, diff_mod_targets = scm_diff_model(n_points, seed)
+    diff_rand_mod_inputs, diff_rand_mod_targets = scm_diff_rand_model(n_points, seed)
+
+    inputs = np.row_stack((obsv_inputs, intv_inputs, diff_mod_inputs, diff_rand_mod_inputs))
+    outputs = np.row_stack((obsv_targets, intv_targets, diff_mod_targets, diff_rand_mod_targets))
+
+    return inputs, outputs 
+
+
 def datapoint_gen_diff_rand_model(n_datapoints, a, b, e):
 
     c = np.random.uniform(-9.78, 19.6, size=n_datapoints)  

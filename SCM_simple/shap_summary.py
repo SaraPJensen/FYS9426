@@ -42,10 +42,28 @@ def make_modelpreds(a_coeff, b_coeff, c_coeff, d_coeff, e_coeff, X, targets):
         pred = a_coeff*A + b_coeff*B + c_coeff*C + d_coeff*D + e_coeff*E
         loss = sklearn.metrics.mean_squared_error(targets, pred)
 
-        return loss
+        return pred, loss
 
 
+def pred_variance(source_file, inputs, targets):
+     
+    all_preds = np.zeros((6, inputs.shape[0])) 
+    df = pd.read_csv(f"{source_file}")
 
+    for i in range(0, 6):
+        a_coeff = df["A"][i]
+        b_coeff = df["B"][i]
+        c_coeff = df["C"][i]
+        d_coeff = df["D"][i]
+        e_coeff = df["E"][i]
+
+        pred, _ = make_modelpreds(a_coeff, b_coeff, c_coeff, d_coeff, e_coeff, inputs, targets)
+        all_preds[i] = pred
+
+    variance = np.var(all_preds, axis = 0)
+    avg_pred_var = np.mean(variance) 
+
+    return avg_pred_var 
 
 
 
@@ -57,7 +75,7 @@ def write_progress(source_file, save_filename, inputs, targets, Deep, Scaling, I
         Scale_type = "Raw_data"
 
     df = pd.read_csv(f"{source_file}")
-    avg_var = df.iat[-1,1]
+    avg_coeff_var = df.iat[-1,1]
 
     a_coeff = df["A"][6]
     b_coeff = df["B"][6]
@@ -65,7 +83,8 @@ def write_progress(source_file, save_filename, inputs, targets, Deep, Scaling, I
     d_coeff = df["D"][6]
     e_coeff = df["E"][6]
 
-    avg_exp_loss = make_modelpreds(a_coeff, b_coeff, c_coeff, d_coeff, e_coeff, inputs, targets)
+    _, avg_exp_loss = make_modelpreds(a_coeff, b_coeff, c_coeff, d_coeff, e_coeff, inputs, targets)
+    avg_pred_var = pred_variance(source_file, inputs, targets)
 
     acc_filename = f"progress/{Output_var}/{filename}.csv"
     df = pd.read_csv(acc_filename)
@@ -76,7 +95,7 @@ def write_progress(source_file, save_filename, inputs, targets, Deep, Scaling, I
     avg_model_loss = np.mean(losses)
 
     save_file = open(save_filename, "a")
-    save_file.write(f"{Deep},{Scale_type},{Intv},{C_D},{Independent},{avg_var},{a_coeff},{b_coeff},{c_coeff},{d_coeff},{e_coeff},{avg_exp_loss},{avg_model_loss}\n")  
+    save_file.write(f"{Deep},{Scale_type},{Intv},{C_D},{Independent},{a_coeff},{b_coeff},{c_coeff},{d_coeff},{e_coeff},{avg_coeff_var},{avg_pred_var},{avg_exp_loss},{avg_model_loss}\n")  
     save_file.close()
 
 
@@ -84,7 +103,7 @@ def write_progress(source_file, save_filename, inputs, targets, Deep, Scaling, I
 
 save_filename = f"shap/{Output_var}/{Output_var}_summary.csv"
 save_file = open(save_filename, "w")
-save_file.write("Deep,Scaling,Intv,C_D,Independent,Avg_variance,avg_A,avg_B,avg_C,avg_D,avg_E,Avg_exp_loss,Avg_model_loss\n")
+save_file.write("Deep,Scaling,Intv,C_D,Independent,avg_A,avg_B,avg_C,avg_D,avg_E,Avg_coeff_variance,Avg_pred_variance,Avg_exp_loss,Avg_model_loss\n")
 save_file.close()
 
 

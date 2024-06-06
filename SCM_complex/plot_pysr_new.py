@@ -10,11 +10,11 @@ from matplotlib import rc
 Output_var = 'y1'
 #Output_var = 'y2'
 
-no_ood = False
+no_ood = True
 
-Variance = False
+Variance = True
 Exp_loss = False
-Model_loss = True
+Model_loss = False
 
 if Variance:
     dep_var = "variance"
@@ -26,6 +26,8 @@ if Model_loss:
     dep_var = "model loss"
     tit_var = "Average model loss"
 
+if no_ood:
+    tit_var = tit_var + ", no ood" 
 
 if no_ood:
     filename = f"pysr/{Output_var}/{Output_var}_no_ood_summary.csv"
