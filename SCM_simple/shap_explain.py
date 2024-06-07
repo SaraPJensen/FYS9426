@@ -152,11 +152,8 @@ def true_model(X):
 
 
 
-#f = lambda x: trained_model(torch.from_numpy(x)).detach().numpy()  #Wrap model to avoid problems with torch tensors and numpy arrays
-
-
 #Wrap model to avoid problems with torch tensors and numpy arrays, plus used unscaled inputs and outputs for the Shap explainer
-#Problem here is that the model and the trained_scalers must be global variables
+#Note that the model and the trained_scalers must be global variables
 def wrapping_func(x):
     if Scaling: 
         x = torch.from_numpy(trained_scaler_inputs.transform(x))
@@ -171,21 +168,14 @@ def wrapping_func(x):
         return pred
 
 
+# Geenrate the explanations for each dataset
 def shap_explainer(dataset, sample_size, bg_data):
     inputs, _ = dataset[:]
     inputs = inputs.numpy()
 
-    # print(inputs.shape)
-    # print(inputs[0].shape)
-    # print(inputs.shape[1])
-    # print(inputs.shape[0])
-
     subset = inputs[np.random.randint(inputs.shape[0], size = bg_data)]
-    # print(subset.shape)
-    # print(np.mean(inputs, axis = 0))
-    # print(np.mean(subset, axis = 0))
-    # exit()
-    explainer = shap.KernelExplainer(wrapping_func, subset) #inputs[0:sample_size, :])
+
+    explainer = shap.KernelExplainer(wrapping_func, subset) 
 
     shap_values = explainer.shap_values(inputs[0:sample_size, :]).squeeze()
     coefficients = np.divide(shap_values, (inputs[:sample_size, :]-np.mean(subset, axis = 0)))
@@ -197,15 +187,14 @@ def shap_explainer(dataset, sample_size, bg_data):
 
 #Datasets available: obsv_torch_dataset, intv_torch_dataset, ood_torch_dataset, ood_intv_torch_dataset, diff_mod_torch_dataset, diff_mod_rand_torch_dataset
 
-sample_size = 500
-bg_data = 100
+sample_size = 500  #Number of total datapoints to explain
+bg_data = 100  #Number of background datapoints to consider
 
 
 model_name = get_model_name(Output_var, Deep, Scaling, Intervene, C_D, Independent, Simplify)
 trained_model = torch.load(model_name)
 trained_model.eval()
 
-#trained_model = true_model
 
 filename = get_filename(Output_var, Deep, Scaling, Intervene, C_D, Independent, Simplify)
 
@@ -289,7 +278,6 @@ file.close()
 
 
 avg_combined_avg = np.mean(combined_avg, axis = 0)
-#avg_combined_variance = np.mean(combined_variance, axis = 0)
 avg_combined_variance = np.var(combined_avg, axis = 0)
 
 

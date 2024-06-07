@@ -17,6 +17,7 @@ import warnings
 np.random.seed(2)
 
 
+# Function to use the different model explanations to generate predictions, and calculate their variance and accuracy 
 def pysr_summary(datasets, eq_path, unscaled_inputs, unscaled_targets, n_testing, filename, summary_save_filename, Output_var, Deep, Scaling, Intv, C_D, Independent, columns):
     all_preds = np.zeros((len(datasets), n_testing))
     all_losses = np.zeros((len(datasets),))
@@ -27,7 +28,7 @@ def pysr_summary(datasets, eq_path, unscaled_inputs, unscaled_targets, n_testing
 
     nan_idx_list = []
 
-
+    #Load each explanation model and make predictions based on it
     for d_set, data in enumerate(datasets):
         model_file = eq_path + data + ".pkl"
 

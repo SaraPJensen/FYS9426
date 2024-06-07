@@ -188,9 +188,10 @@ feature_names = ['a', 'b', 'c', 'd', 'e']   #Global variable
 
 
 # Generate dataset for the model predictions of each model. Must rescale both the inputs and the outputs before passing them to PySR
-
 token_inputs, token_outputs = obsv_torch_dataset[:]
 
+
+#Funciton to generate datasets from the model predictions and train the PySR explanation model. 
 def fit_pysr(dataset_name, trained_model, dataloader, save_path, save_file, Scaling, token_inputs, token_outputs):
 
     pysr_inputs = torch.zeros_like(token_inputs)
@@ -254,65 +255,4 @@ fit_pysr("diff_mod_rand", trained_model, diff_mod_rand_torch_loader, save_path, 
 
 
 
-'''
-
-test_input, test_output = test_data[:]
-test_input = np.asarray(test_input.numpy())
-test_output = np.asarray(test_output.numpy())
-
-
-intv_input, intv_output = intv_torch_dataset[:]
-intv_input = np.asarray(intv_input.numpy())
-intv_output = np.asarray(intv_output.numpy())
-
-
-model = PySRRegressor(
-    niterations=10,  # < Increase me for better results
-    binary_operators=["+", "-", "*", "/", "^"],
-    unary_operators=[
-        "cos",
-        "exp",
-        "sin",
-        "square",
-        "inv(x) = 1/x",
-        # ^ Custom operator (julia syntax)
-    ],
-    constraints = {'^': (-1, 1)},
-    extra_sympy_mappings={"inv": lambda x: 1 / x},
-    equation_file = f"{save_path}eqs.csv",
-    tempdir = "pysr/y1/temp",
-    temp_equation_file = True,
-    delete_tempfiles = False
-)
-
-
-model.fit(intv_input, intv_output, variable_names = feature_names)
-
-print("Final expression: ", model)
-
-print("Best equation: ", model.get_best().equation) 
-
-print()
-
-d_point = np.asarray([1, 2, 3, 4, 5]).reshape(1, -1)
-
-print(model.predict(d_point))
-
-
-symbol = str(model.sympy())
-print("String of sympy: ", symbol)
-
-save_symbol_filename = f"{save_path}best_eq.csv"
-save_symbol_file = open(save_symbol_filename, "w")
-save_symbol_file.write(symbol)
-save_symbol_file.close()
-
-
-# symbol = model.pytorch()
-# print(symbol)
-# print(symbol(d_point))
-
-
-
-'''
 
