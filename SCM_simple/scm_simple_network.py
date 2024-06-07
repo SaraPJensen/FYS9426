@@ -52,47 +52,12 @@ class MyDataset(Dataset):
 
         if output_var == 'y1':
             self.targets = targets[:,0].unsqueeze(dim = 1)
-
             if simplify: 
                 self.inputs = self.inputs[:, [0, 3]] # Y1 is only directly dependent on A and D
-
-            # print()
-            # print("C:")
-            # print("Min: ", torch.min(self.inputs[:, 2]))
-            # print("Max: ", torch.max(self.inputs[:, 2]))
-            
-            # print()
-            # print("D:")
-            # print("Min: ", torch.min(self.inputs[:, 3]))
-            # print("Max: ", torch.max(self.inputs[:, 3]))
-
-            # print()
-            # print("Y1")
-            # print("Min: ", torch.min(self.targets))
-            # print("Max: ", torch.max(self.targets))
-
-            # input()
-
 
 
         elif output_var == 'y2':
             self.targets = targets[:,1].unsqueeze(dim = 1)
-            # print()
-            # print("C:")
-            # print("Min: ", torch.min(self.inputs[:, 2]))
-            # print("Max: ", torch.max(self.inputs[:, 2]))
-            
-            # print()
-            # print("D:")
-            # print("Min: ", torch.min(self.inputs[:, 3]))
-            # print("Max: ", torch.max(self.inputs[:, 3]))
-
-            # print()
-            # print("Y2")
-            # print("Min: ", torch.min(self.targets))
-            # print("Max: ", torch.max(self.targets))
-
-            # input()
             if simplify: 
                 self.inputs = self.inputs[:, [3, 4]]   #Y2 is only directly dependent on D and E
         else: 
@@ -108,9 +73,6 @@ class MyDataset(Dataset):
         inputs, _ = training_data[:]
         scaler_inputs.fit(inputs)
         self.scaler_inputs = scaler_inputs
-
-        # self.inputs = torch.from_numpy(self.scaler_inputs.transform(self.inputs))  #scale all the input features in the dataset, both training and test, according to the training data
-        # self.inputs = self.inputs.to(torch.float32)
 
         return self.scaler_inputs
 
